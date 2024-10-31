@@ -1,0 +1,31 @@
+# Environment and logs
+.env            # Environment variables
+# Logs
+logs
+*.log           # Log files
+npm-debug.log*  # npm debug logs
+yarn-debug.log* # Yarn debug logs
+yarn-error.log*
+pnpm-debug.log* # pnpm debug logs
+lerna-debug.log* # Lerna debug logs
+
+# Dependencies and build files
+node_modules    # Node.js modules
+dist            # Build output folder
+dist-ssr        # Server-side rendered build folder
+*.local         # Local environment files
+
+# Editor directories and files
+.vscode/*       # Visual Studio Code config folder
+!.vscode/extensions.json # Allow shared extensions config
+.idea           # JetBrains IDE config folder
+.DS_Store       # macOS directory file
+*.suo           # Visual Studio project file
+*.ntvs*         # Node.js Tools for Visual Studio files
+*.njsproj       # Node.js project file for Visual Studio
+*.sln           # Solution files for Visual Studio
+*.sw?           # Swap files for text editors
+node_modules
+server/uploads/
+client/node_modules/
+server/node_modules
