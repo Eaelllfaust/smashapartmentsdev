@@ -927,30 +927,23 @@ const getCurrentBookings = async (req, res) => {
 
     const bookings = await Booking.find({
       userId,
-
       status: { $in: ["confirmed", "reserved", "cancelled", "ended"] },
-
-    }).lean();
+    })
+    .lean();
 
     if (!bookings.length) {
       return res.status(404).json({ error: "No bookings found for this user" });
     }
 
-   
     const bookingsWithDetails = await Promise.all(
       bookings.map(async (booking) => {
         try {
-         
           const media = await MediaTag.find({
             listing_id: booking.listingId,
           }).lean();
 
-     
-          const stayListing = await StayListing.findById(
-            booking.listingId
-          ).lean();
+          const stayListing = await StayListing.findById(booking.listingId).lean();
 
-      
           const receipts = await Receipts.find({
             booking_id: booking._id
           }).lean();
@@ -966,27 +959,23 @@ const getCurrentBookings = async (req, res) => {
             contact_email: stayListing?.contact_email || "Not provided",
           };
         } catch (err) {
-          console.error(
-            `Error fetching details for booking ${booking._id}:`,
-            err
-          );
+          console.error(`Error fetching details for booking ${booking._id}:`, err);
           return booking; 
         }
       })
     );
 
-    res.status(200).json(bookingsWithDetails);
+    res.status(200).json(bookingsWithDetails.reverse());
   } catch (error) {
     console.error("Error fetching user bookings:", error);
     res.status(500).json({ error: "Failed to fetch user bookings" });
   }
 };
 
+
 const getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
-
-   
     const [
       totalBookingCount,
       totalCoofficeCount,
@@ -1007,12 +996,12 @@ const getUserBookings = async (req, res) => {
       ServiceBooking.countDocuments({ userId, status: "reserved" }),
     ]);
 
-    // Calculate total and reserved bookings by summing the counts
     const totalBookings =
       totalBookingCount +
       totalCoofficeCount +
       totalRentalCount +
       totalServiceCount;
+
     const reservedBookings =
       reservedBookingCount +
       reservedCoofficeCount +
@@ -1027,8 +1016,8 @@ const getUserBookings = async (req, res) => {
 };
 
 const getUsers = async (req, res) => {
+
   try {
-    // Find users where account_type is not "admin" and exclude password from the results
     const users = await User.find(
       { account_type: { $ne: "admin" } },
       "-password"
@@ -1039,6 +1028,7 @@ const getUsers = async (req, res) => {
       .status(500)
       .json({ message: "Error fetching users", error: error.message });
   }
+
 };
 
 async function aggregateRevenueFromSchema(schema, schemaName, dateField = 'createdAt', priceField = 'totalPrice') {
@@ -1049,7 +1039,7 @@ async function aggregateRevenueFromSchema(schema, schemaName, dateField = 'creat
           _id: {
             $dateToString: { format: "%Y-%m-%d", date: `$${dateField}` }
           },
-          totalRevenue: { $sum: `$${priceField}` } // Sum up the revenue using the correct price field
+          totalRevenue: { $sum: `$${priceField}` } 
         }
       },
       { $sort: { _id: 1 } }
