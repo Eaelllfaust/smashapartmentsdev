@@ -9,7 +9,7 @@ const actionsSchema = new mongoose.Schema({
     message: { type: String, required: true },
     type: {
       type: String,
-      enum: ["listing", "booking", "payment", "accounts", "general"],
+      enum: ["listing_approval", "booking", "payment", "accounts", "general", "refund_appeal", "vendor_payment"],
       default: "general",
     },
     status: {
