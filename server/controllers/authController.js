@@ -364,14 +364,12 @@ const cancelBooking = async (req, res) => {
   const { bookingId } = req.params;
 
   try {
-    // Find the booking without updating it initially
     const booking = await Booking.findById(bookingId);
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Check if the booking was created more than an hour ago
     const oneHourInMillis = 60 * 60 * 1000;
     const timeDifference = Date.now() - new Date(booking.createdAt).getTime();
 
@@ -379,9 +377,17 @@ const cancelBooking = async (req, res) => {
       return res.status(400).json({ message: "Booking cannot be cancelled as it was made more than an hour ago" });
     }
 
-    // Proceed to cancel the booking if it's within the allowed time frame
     booking.status = "cancelled";
     await booking.save();
+
+
+    await Adminactions.create({
+      userId: booking.userId,  
+      dataId: booking._id,
+      message: "A new refund appeal has been made",
+      type: "refund_appeal",
+      status: "pending"
+    });
 
     res.status(200).json({ message: "Booking cancelled successfully", booking });
   } catch (error) {
@@ -389,6 +395,7 @@ const cancelBooking = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 const getUserPreferences = async (req, res) => {

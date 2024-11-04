@@ -243,7 +243,7 @@ export default function CurrentBookings() {
                       </div>
                       <br />
                       <div className="action">
-                      {booking.status === "confirmed" && isCancellable(booking.createdAt) && (
+                       {booking.status === "confirmed" && isCancellable(booking.createdAt) && (
   <div className="new_btn_1" onClick={() => handleCancel(booking._id)}>
     Cancel
   </div>
