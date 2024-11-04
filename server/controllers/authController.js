@@ -3174,6 +3174,120 @@ if (req.files && req.files.length > 0) {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const updateService = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const { id } = req.params;
+    const existingService = await Service.findById(id);
+    if (!existingService) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    // Parse form data for updating fields
+    const parsedBody = {
+      serviceName: req.body.serviceName,
+      description: req.body.description,
+      carMakeModel: req.body.carMakeModel,
+      carColor: req.body.carColor,
+      plateNumber: req.body.plateNumber,
+      driverName: req.body.driverName,
+      driverLicenseNumber: req.body.driverLicenseNumber,
+      driverPhoneNumber: req.body.driverPhoneNumber,
+      driverEmail: req.body.driverEmail,
+      pickupPrice: parseFloat(req.body.pickupPrice),
+      extraLuggage: parseInt(req.body.extraLuggage),
+      waitingTime: parseInt(req.body.waitingTime),
+      availableFrom: new Date(req.body.availableFrom),
+      availableTo: new Date(req.body.availableTo),
+      cancellationPolicy: req.body.cancellationPolicy,
+      refundPolicy: req.body.refundPolicy,
+      contactName: req.body.contactName,
+      contactPhone: req.body.contactPhone,
+      contactEmail: req.body.contactEmail,
+    };
+
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Update the service
+      Object.assign(existingService, parsedBody);
+      await existingService.save({ session });
+
+      // Handle existing images
+      const existingImages = req.body.existingImages;
+      const existingImageUrls = Array.isArray(existingImages)
+        ? existingImages
+        : existingImages ? [existingImages] : [];
+
+      const currentMediaTags = await MediaTag.find({ listing_id: id });
+
+      // Find media tags to delete (those not in existingImageUrls)
+      const toDelete = currentMediaTags.filter(
+        (tag) => !existingImageUrls.includes(tag.media_location)
+      );
+
+      // Delete only the removed media tags
+      if (toDelete.length > 0) {
+        await MediaTag.deleteMany(
+          {
+            listing_id: id,
+            media_location: { $in: toDelete.map(tag => tag.media_location) }
+          },
+          { session }
+        );
+      }
+
+      // Handle new images - Keep existing images and add new ones
+      if (req.files && req.files.length > 0) {
+        const newMediaTags = req.files.map(file => ({
+          listing_id: existingService._id,
+          media_name: file.filename,
+          media_location: file.path,
+          size: file.size,
+        }));
+
+        await MediaTag.insertMany(newMediaTags, { session });
+      }
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Get updated service with all images
+      const updatedMediaTags = await MediaTag.find({ listing_id: id });
+      
+      res.status(200).json({
+        message: "Service updated successfully",
+        service: {
+          ...existingService.toObject(),
+          images: updatedMediaTags.map(tag => ({
+            location: tag.media_location,
+            name: tag.media_name
+          }))
+        }
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error("Error updating service:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 const getStayListing = async (req, res) => {
   try {
@@ -3204,6 +3318,46 @@ const getStayListing = async (req, res) => {
     res.status(200).json({
       message: "Stay listing fetched successfully",
       stayListing: {
+        ...stayListing,
+        images,
+      },
+    });
+
+  } catch (error) {
+    console.error("Error fetching stay listing:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+   
+};
+const getServiceListing = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const listingId = req.params.id;
+    const stayListing = await Service.findById(listingId).lean();
+    if (!stayListing) {
+      return res.status(404).json({ error: "Stay listing not found" });
+    }
+
+    const mediaTags = await MediaTag.find({ listing_id: listingId });
+    const images = mediaTags.map((media) => ({
+      name: media.media_name,
+      location: media.media_location,
+      size: media.size,
+    }));
+
+    res.status(200).json({
+      message: "Stay listing fetched successfully",
+      serviceListing: {
         ...stayListing,
         images,
       },
@@ -4393,5 +4547,8 @@ module.exports = {
   uploadReceiptRental,
   uploadReceiptOffice,
   getStayListing,
-  updateListing
+  getServiceListing,
+  updateListing,
+  updateService,
+
 };

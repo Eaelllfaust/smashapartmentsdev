@@ -86,6 +86,8 @@ const {
   uploadReceiptRental,
   getStayListing,
   updateListing,
+  getServiceListing,
+  updateService,
 } = require("../controllers/authController");
 
 router.use(
@@ -165,12 +167,14 @@ router.get("/getcurrentbookings/:userId", getCurrentBookings);
 router.get("/getcurrentrentals/:userId", getCurrentRentals);
 router.get("/checkliked/:id", checkLiked);
 router.get("/getlisting/:id", getStayListing);
+router.get("/getservicelisting/:id", getServiceListing);
 router.get("/getpaymentmethod", getPaymentMethod);
 router.post("/createpartner", createPartner);
 router.post("/stayslisting", upload.array("images", 15), createStayListing);
 router.put("/stayslisting/:id", upload.array("images", 15), updateListing);
 router.post("/coofficelisting", upload.array("images", 15), createOfficeListing);
 router.post("/airportpickuplisting", upload.array("images", 15), createService);
+router.put("/airportpickuplisting/:id", upload.array("images", 15), updateService);
 router.post("/carrentalslisting", upload.array("images", 15), createRental);
 router.post("/uploadreceipt/:bookingId", upload.single("receipt"), uploadReceipt);
 router.post("/uploadreceiptpickup/:bookingId", upload.single("receipt"), uploadReceiptPickup);

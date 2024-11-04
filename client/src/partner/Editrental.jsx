@@ -5,32 +5,27 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function Editservice() {
+export default function Editrental() {
   const { user, loading } = useContext(UserContext);
   const navigate = useNavigate();
-  const [existingImages, setExistingImages] = useState([]);
-  const [images, setImages] = useState({
-    existing: [], 
-    new: [], 
-  });
-
-  const id = new URLSearchParams(location.search).get("id");
-
-  const [selectedImages, setSelectedImages] = useState([]);
   const fileInputRef = useRef(null);
+  const [selectedImages, setSelectedImages] = useState([]);
   const [state, setState] = React.useState({
-    serviceName: "",
+    carNameModel: "",
+    carType: "",
     description: "",
     carMakeModel: "",
     carColor: "",
     plateNumber: "",
+    mileage: "",
     driverName: "",
     driverLicenseNumber: "",
     driverPhoneNumber: "",
     driverEmail: "",
-    pickupPrice: "",
-    extraLuggage: "",
-    waitingTime: "",
+    rentalPrice: "",
+    insurance: "",
+    fuel: "",
+    extraDriver: "",
     availableFrom: "",
     availableTo: "",
     cancellationPolicy: "",
@@ -42,87 +37,26 @@ export default function Editservice() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) {
+    if (!user || user.interface !== "partner") {
       navigate("/signin");
-    } else if (user.interface !== "partner") {
-      navigate("/");
-    } else if (id) {
-      fetchListingData(id);
     }
-  }, [user, loading, navigate, id]);
-  const fetchListingData = async (listingId) => {
-    try {
-      const response = await axios.get(`/getservicelisting/${listingId}`);
-      const data = response.data.serviceListing;
-      setState({
-        serviceName: data.serviceName, // Mapping to the corresponding state field
-        description: data.description,
-        carMakeModel: data.carMakeModel,
-        carColor: data.carColor,
-        plateNumber: data.plateNumber,
-        driverName: data.driverName,
-        driverLicenseNumber: data.driverLicenseNumber,
-        driverPhoneNumber: data.driverPhoneNumber,
-        driverEmail: data.driverEmail,
-        pickupPrice: data.pickupPrice, // Assuming it's a number
-        extraLuggage: data.extraLuggage, // Assuming it's a string (e.g., price)
-        waitingTime: data.waitingTime, // Assuming it's a string (e.g., time in seconds)
-        availableFrom: data.availableFrom.slice(0, 10), // Formatting to YYYY-MM-DD
-        availableTo: data.availableTo.slice(0, 10), // Formatting to YYYY-MM-DD
-        cancellationPolicy: data.cancellationPolicy,
-        refundPolicy: data.refundPolicy,
-        contactName: data.contactName,
-        contactPhone: data.contactPhone,
-        contactEmail: data.contactEmail,
-      });
+  }, [user, loading, navigate]);
 
-      setImages((prev) => ({
-        ...prev,
-        existing: data.images.map((img) => ({
-          url: img.location,
-          name: img.name,
-        })),
-      }));
-    } catch (error) {
-      toast.error("Failed to load listing data.");
-    }
-  };
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter((file) => file.size <= 8 * 1024 * 1024);
-
-    if (validFiles.length < files.length) {
-      toast.error("Some files exceed the 8MB size limit.");
+    const newImages = files.filter((file) => file.size <= 5 * 1024 * 1024); // 5MB limit
+    if (selectedImages.length + newImages.length > 5) {
+      alert("You can only upload up to 5 images.");
+    } else {
+      setSelectedImages([...selectedImages, ...newImages]);
     }
-
-    if (images.existing.length + images.new.length + validFiles.length > 15) {
-      toast.error("You can only upload up to 15 images.");
-      return;
-    }
-
-    const newImages = validFiles.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-
-    setImages((prev) => ({
-      ...prev,
-      new: [...prev.new, ...newImages],
-    }));
-
-    e.target.value = "";
+    e.target.value = ""; // Clear the input so the same file can be selected again if needed
   };
 
-  const handleImageRemove = (index, type) => {
-    setImages((prev) => ({
-      ...prev,
-      [type]: prev[type].filter((_, i) => i !== index),
-    }));
-
-    // If removing a new image, revoke its object URL
-    if (type === "new" && images.new[index]?.preview) {
-      URL.revokeObjectURL(images.new[index].preview);
-    }
+  const handleImageRemove = (indexToRemove) => {
+    setSelectedImages(
+      selectedImages.filter((_, index) => index !== indexToRemove)
+    );
   };
 
   const triggerFileInput = () => {
@@ -131,44 +65,55 @@ export default function Editservice() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setState({
-      ...state,
+    setState((prevState) => ({
+      ...prevState,
       [name]: type === "checkbox" ? checked : value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const formData = new FormData();
-
-    // Append all form fields
     Object.keys(state).forEach((key) => {
-      const value = state[key];
-      formData.append(
-        key,
-        typeof value === "boolean" ? value.toString() : value
-      );
+      // Convert boolean values to strings
+      if (typeof state[key] === "boolean") {
+        formData.append(key, state[key].toString());
+      } else {
+        formData.append(key, state[key]);
+      }
     });
 
-    // Append new images
-    images.new.forEach((image) => {
-      formData.append("images", image.file);
-    });
-
-    // Append existing image URLs - Modified to send each URL separately
-    images.existing.forEach((image) => {
-      formData.append("existingImages", image.url); // Changed from existingImages[] to existingImages
+    selectedImages.forEach((image, index) => {
+      formData.append("images", image);
     });
 
     try {
-      const response = await axios.put(`/airportpickuplisting/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await axios.post("/carrentalslisting", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
-      toast.success(response.data.message);
+
+      if (response.data.error) {
+        toast.error(response.data.error);
+
+      } else {
+        toast.success(response.data.message);
+        navigate("/partner/managelistings/");
+      }
+
     } catch (error) {
+
+      console.error("Error submitting form:", error);
       toast.error(
         error.response?.data?.error || "An error occurred. Please try again."
       );
+
+      if (error.response?.data?.details) {
+        error.response.data.details.forEach((detail) => toast.error(detail));
+      }
+      
     }
   };
 
@@ -215,43 +160,23 @@ export default function Editservice() {
                   </p>
                 </div>
               </div>
-              <div className="image_preview">
-                {images.existing.map((image, index) => (
-                  <div key={`existing-${index}`} className="image_container">
-                    <img
-                      src={`http://localhost:8000/${image.url}`}
-                      alt={`existing preview ${index}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleImageRemove(index, "existing")}
-                      className="remove-btn"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                {images.new.map((image, index) => (
-                  <div key={`new-${index}`} className="image_container">
-                    <img src={image.preview} alt={`new preview ${index}`} />
-                    <button
-                      type="button"
-                      onClick={() => handleImageRemove(index, "new")}
-                      className="remove-btn"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-
+              {selectedImages.map((image, index) => (
+                <div key={index} className="image_container">
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Image ${index + 1}`}
+                  />
+                  <button onClick={() => handleImageRemove(index)}>
+                    Remove
+                  </button>
+                </div>
+              ))}
               <input
-                ref={fileInputRef}
                 type="file"
-                style={{ display: "none" }}
-                accept="image/*"
                 multiple
+                ref={fileInputRef}
                 onChange={handleImageSelect}
+                style={{ display: "none" }}
               />
             </div>
             <div className="list_2 v85">
@@ -260,19 +185,51 @@ export default function Editservice() {
               <div className="form">
                 <h3>Basic information</h3>
                 <br />
-                <label htmlFor="service-name">Service name</label>
+                <label htmlFor="car-name-model">Car name and model</label>
                 <br />
                 <input
-                  id="service-name"
+                  id="car-name-model"
                   className="input"
                   type="text"
-                  placeholder="Service name"
-                  name="serviceName"
-                  value={state.serviceName}
+                  placeholder="Car name and model"
+                  name="carNameModel"
+                  value={state.carNameModel}
                   onChange={handleChange}
                 />
                 <br />
-                <label htmlFor="description">Description</label>
+                <label htmlFor="car-type">Car type</label>
+                <br />
+                <select
+                  id="car-type"
+                  name="carType"
+                  value={state.carType}
+                  onChange={handleChange}
+                >
+                  <option value="sedan">Sedan</option>
+                  <option value="suv">SUV</option>
+                  <option value="hatchback">Hatchback</option>
+                  <option value="convertible">Convertible</option>
+                  <option value="coupe">Coupe</option>
+                  <option value="minivan">Minivan</option>
+                  <option value="pickup-truck">Pickup Truck</option>
+                  <option value="station-wagon">Station Wagon</option>
+                  <option value="sports-car">Sports Car</option>
+                  <option value="luxury-car">Luxury Car</option>
+                  <option value="electric-car">Electric Car</option>
+                  <option value="hybrid-car">Hybrid Car</option>
+                  <option value="crossover">Crossover</option>
+                  <option value="diesel-car">Diesel Car</option>
+                  <option value="compact-car">Compact Car</option>
+                  <option value="roadster">Roadster</option>
+                  <option value="van">Van</option>
+                  <option value="microcar">Microcar</option>
+                  <option value="limousine">Limousine</option>
+                  <option value="muscle-car">Muscle Car</option>
+                  <option value="supercar">Supercar</option>
+                  <option value="classic-car">Classic Car</option>
+                </select>
+                <br />
+                <label htmlFor="description">Enter description</label>
                 <br />
                 <textarea
                   id="description"
@@ -321,7 +278,18 @@ export default function Editservice() {
                     onChange={handleChange}
                   />
                   <br />
-                  <label htmlFor="driver-name">Driver's name</label>
+                  <label htmlFor="mileage">Mileage</label>
+                  <br />
+                  <input
+                    id="mileage"
+                    className="input"
+                    type="text"
+                    placeholder="Current mileage of the car"
+                    name="mileage"
+                    value={state.mileage}
+                    onChange={handleChange}
+                  />
+                  <br /> <label htmlFor="driver-name">Driver's name</label>
                   <br />
                   <input
                     id="driver-name"
@@ -376,41 +344,53 @@ export default function Editservice() {
                   <h3>Pricing</h3>
                   <br />
                   <div className="line" />
-                  <label htmlFor="pickup-price">Pickup price</label>
+                  <label htmlFor="rental-price">Rental price</label>
                   <br />
                   <input
-                    id="pickup-price"
+                    id="rental-price"
                     className="input"
                     type="number"
-                    placeholder="Pickup price"
-                    name="pickupPrice"
-                    value={state.pickupPrice}
+                    placeholder="Rental price"
+                    name="rentalPrice"
+                    value={state.rentalPrice}
                     onChange={handleChange}
                   />
                   <br />
-                  <h3>Additional details</h3>
+                  <h3>Additional charges</h3>
                   <br />
-                  <label htmlFor="extra-luggage">Extra luggage</label>
+                  <label htmlFor="insurance">Insurance</label>
                   <br />
                   <input
-                    id="extra-luggage"
+                    id="insurance"
                     className="input"
                     type="number"
-                    placeholder="Enter amount"
-                    name="extraLuggage"
-                    value={state.extraLuggage}
+                    placeholder="Insurance"
+                    name="insurance"
+                    value={state.insurance}
                     onChange={handleChange}
                   />
                   <br />
-                  <label htmlFor="waiting-time">Waiting </label>
+                  <label htmlFor="fuel">Fuel</label>
                   <br />
                   <input
-                    id="waiting-time"
+                    id="fuel"
                     className="input"
                     type="number"
-                    placeholder="Enter amount"
-                    name="waitingTime"
-                    value={state.waitingTime}
+                    placeholder="Fuel"
+                    name="fuel"
+                    value={state.fuel}
+                    onChange={handleChange}
+                  />
+                  <br />
+                  <label htmlFor="extra-driver">Extra driver</label>
+                  <br />
+                  <input
+                    id="extra-driver"
+                    className="input"
+                    type="number"
+                    placeholder="Extra driver"
+                    name="extraDriver"
+                    value={state.extraDriver}
                     onChange={handleChange}
                   />
                   <br />
@@ -501,7 +481,19 @@ export default function Editservice() {
                     onChange={handleChange}
                   />
                   <br />
-                  <div className="button b2" onClick={handleSubmit}>
+                  <label htmlFor="contact-address">Address</label>
+                  <br />
+                  <input
+                    id="contact-address"
+                    className="input"
+                    type="text"
+                    placeholder="Address"
+                    name="contactAddress"
+                    value={state.contactAddress}
+                    onChange={handleChange}
+                  />
+                  <br />
+                  <div className="button b2 stick" onClick={handleSubmit}>
                     Add listing
                   </div>
                 </div>
