@@ -22,19 +22,20 @@ const Newsletter = require("../models/newsletter");
 const axios = require("axios");
 const PartnerEarning = require("../models/partnerearning");
 const UserComplaint = require("../models/usercomplaint");
+const Adminactions = require("../models/adminactions"); 
 const Payout = require("../models/payout");
 const crypto = require("crypto");
 const Nodemailer = require("nodemailer");
 const { MailtrapTransport } = require("mailtrap");
 
-const TOKEN = " 63363cda2f262b1fc829c8f1fa43d068";
+const TOKEN = "a52eb352bda326c835d047cfdb711bd1";
 
 const transport = Nodemailer.createTransport(
   MailtrapTransport({
     token: TOKEN,
+    testInboxId: 3144266,
   })
 );
-
 const sender = {
   address: "mailtrap@smashapartments.com",
   name: "Smash Apartments",
@@ -309,27 +310,25 @@ const getCurrentOfficeSpaces = async (req, res) => {
 
 
 const cancelService = async (req, res) => {
-  const { bookingId } = req.params; // Extract bookingId from the request parameters
+  const { bookingId } = req.params; 
 
   try {
-    // Find the booking by ID and update its status to 'cancelled'
+
     const booking = await ServiceBooking.findByIdAndUpdate(
       bookingId,
       { status: "cancelled" },
       { new: true }
     );
 
-    // If booking not found, return a 404 response
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Return a 200 response with the updated booking
     res
       .status(200)
       .json({ message: "Booking cancelled successfully", booking });
   } catch (error) {
-    // Log any error and return a 500 response
+
     console.error("Error cancelling booking:", error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -339,24 +338,73 @@ const cancelRental = async (req, res) => {
   const { rentalId } = req.params;
 
   try {
-    // Find the rental by ID and update its status to 'cancelled'
+
     const rental = await Rental.findByIdAndUpdate(
       rentalId,
       { status: "cancelled" },
       { new: true }
     );
 
-    // If rental not found, return a 404 response
     if (!rental) {
       return res.status(404).json({ message: "Rental not found" });
     }
 
-    // Return a 200 response with the updated rental
     res.status(200).json({ message: "Rental cancelled successfully", rental });
   } catch (error) {
-    // Log any error and return a 500 response
+ 
     console.error("Error cancelling rental:", error);
     res.status(500).json({ message: "Internal server error" });
+
+  }
+};
+const sendRefundPendingEmail = async (email) => {
+  const htmlTemplate = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Refund Appeal Pending Approval</title>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    </head>
+    <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+            <h2 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">Refund Appeal Pending Approval</h2>
+        </header>
+        
+        <main style="padding: 20px;">
+            <p>Hello,</p>
+            <p>We have received your refund appeal for your recent booking cancellation. Your request is currently under review and pending approval from our administration team.</p>
+            <p>If approved, 50% of the amount you paid will be refunded to you. We appreciate your patience as we complete the review process and aim to resolve this matter promptly.</p>
+            <p>Best regards,</p>
+            <p>The SmashApartment.com Team</p>
+        </main>
+        
+        <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+            <p>This email is from SmashApartment.com. If you have questions, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+            <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+            <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+        </footer>
+    </body>
+    </html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject: "Refund Appeal Pending Approval",
+    text: "We have received your refund appeal. Your request is currently pending approval, and if approved, you will receive a 50% refund.",
+    html: htmlTemplate,
+    category: "Refund Appeal",
+    sandbox: true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Refund pending email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending refund pending email:", error);
+    throw error;
   }
 };
 
@@ -364,35 +412,34 @@ const cancelBooking = async (req, res) => {
   const { bookingId } = req.params;
 
   try {
+
     const booking = await Booking.findById(bookingId);
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    const oneHourInMillis = 60 * 60 * 1000;
-    const timeDifference = Date.now() - new Date(booking.createdAt).getTime();
+    const user = await User.findById(booking.userId);
 
-    if (timeDifference > oneHourInMillis) {
-      return res.status(400).json({ message: "Booking cannot be cancelled as it was made more than an hour ago" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    booking.status = "cancelled";
-    await booking.save();
+   await sendRefundPendingEmail(user.email);
 
 
-    await Adminactions.create({
-      userId: booking.userId,  
-      dataId: booking._id,
-      message: "A new refund appeal has been made",
-      type: "refund_appeal",
-      status: "pending"
-    });
+   await Adminactions.create({
+    userId: booking.userId,  
+    dataId: booking._id,
+    message: "A new refund appeal has been made",
+    type: "refund_appeal",
+    status: "pending"
+  });
 
-    res.status(200).json({ message: "Booking cancelled successfully", booking });
+    res.status(200).json({ message: "Booking cancelled and refund pending email sent" });
   } catch (error) {
-    console.error("Error cancelling booking:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in cancelBooking:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
