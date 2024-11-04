@@ -6,10 +6,18 @@ import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Editrental() {
+
   const { user, loading } = useContext(UserContext);
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
+  const [existingImages, setExistingImages] = useState([]);
+  const [images, setImages] = useState({
+    existing: [],
+    new: [],
+  });
+  const id = new URLSearchParams(location.search).get("id");
   const [selectedImages, setSelectedImages] = useState([]);
+  const fileInputRef = useRef(null);
+
   const [state, setState] = React.useState({
     carNameModel: "",
     carType: "",
@@ -37,83 +45,135 @@ export default function Editrental() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user || user.interface !== "partner") {
+    if (!user) {
       navigate("/signin");
+    } else if (user.interface !== "partner") {
+      navigate("/");
+    } else if (id) {
+      fetchListingData(id);
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, id]);
+
+
+  const fetchListingData = async (listingId) => {
+    try {
+      const response = await axios.get(`/getrentallisting/${listingId}`);
+      const data = response.data.rentalListing;
+      setState({
+        carNameModel: data.carNameModel || "", 
+        carType: data.carType || "", 
+        description: data.description || "",
+        carMakeModel: data.carMakeModel || "",
+        carColor: data.carColor || "",
+        plateNumber: data.plateNumber || "",
+        mileage: data.mileage || "", 
+        driverName: data.driverName || "",
+        driverLicenseNumber: data.driverLicenseNumber || "",
+        driverPhoneNumber: data.driverPhoneNumber || "",
+        driverEmail: data.driverEmail || "",
+        rentalPrice: data.rentalPrice || "", 
+        insurance: data.insurance || "", 
+        fuel: data.fuel || "", 
+        extraDriver: data.extraDriver || "", 
+        availableFrom: data.availableFrom ? data.availableFrom.slice(0, 10) : "",
+        availableTo: data.availableTo ? data.availableTo.slice(0, 10) : "",
+        cancellationPolicy: data.cancellationPolicy || "",
+        refundPolicy: data.refundPolicy || "",
+        contactName: data.contactName || "",
+        contactPhone: data.contactPhone || "",
+        contactEmail: data.contactEmail || "",
+      });
+
+      setImages((prev) => ({
+        ...prev,
+        existing: data.images.map((img) => ({
+          url: img.location,
+          name: img.name,
+        })),
+      }));
+    } catch (error) {
+      toast.error("Failed to load listing data.");
+    }
+  };
 
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.filter((file) => file.size <= 5 * 1024 * 1024); // 5MB limit
-    if (selectedImages.length + newImages.length > 5) {
-      alert("You can only upload up to 5 images.");
-    } else {
-      setSelectedImages([...selectedImages, ...newImages]);
+    const validFiles = files.filter((file) => file.size <= 8 * 1024 * 1024);
+
+    if (validFiles.length < files.length) {
+      toast.error("Some files exceed the 8MB size limit.");
     }
-    e.target.value = ""; // Clear the input so the same file can be selected again if needed
+
+    if (images.existing.length + images.new.length + validFiles.length > 15) {
+      toast.error("You can only upload up to 15 images.");
+      return;
+    }
+
+    const newImages = validFiles.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    setImages((prev) => ({
+      ...prev,
+      new: [...prev.new, ...newImages],
+    }));
+
+    e.target.value = "";
   };
 
-  const handleImageRemove = (indexToRemove) => {
-    setSelectedImages(
-      selectedImages.filter((_, index) => index !== indexToRemove)
-    );
-  };
+  const handleImageRemove = (index, type) => {
+    setImages((prev) => ({
+      ...prev,
+      [type]: prev[type].filter((_, i) => i !== index),
+    }));
 
+    // If removing a new image, revoke its object URL
+    if (type === "new" && images.new[index]?.preview) {
+      URL.revokeObjectURL(images.new[index].preview);
+    }
+  };
   const triggerFileInput = () => {
     fileInputRef.current.click();
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setState((prevState) => ({
-      ...prevState,
+    setState({
+      ...state,
       [name]: type === "checkbox" ? checked : value,
-    }));
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const formData = new FormData();
+
     Object.keys(state).forEach((key) => {
-      // Convert boolean values to strings
-      if (typeof state[key] === "boolean") {
-        formData.append(key, state[key].toString());
-      } else {
-        formData.append(key, state[key]);
-      }
+      const value = state[key];
+      formData.append(
+        key,
+        typeof value === "boolean" ? value.toString() : value
+      );
     });
 
-    selectedImages.forEach((image, index) => {
-      formData.append("images", image);
+    images.new.forEach((image) => {
+      formData.append("images", image.file);
+    });
+  
+    images.existing.forEach((image) => {
+      formData.append("existingImages", image.url); 
     });
 
     try {
-      const response = await axios.post("/carrentalslisting", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const response = await axios.put(`/carrentalslisting/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-
-      if (response.data.error) {
-        toast.error(response.data.error);
-
-      } else {
-        toast.success(response.data.message);
-        navigate("/partner/managelistings/");
-      }
-
+      toast.success(response.data.message);
     } catch (error) {
-
-      console.error("Error submitting form:", error);
       toast.error(
         error.response?.data?.error || "An error occurred. Please try again."
       );
-
-      if (error.response?.data?.details) {
-        error.response.data.details.forEach((detail) => toast.error(detail));
-      }
-      
     }
   };
 
@@ -160,17 +220,35 @@ export default function Editrental() {
                   </p>
                 </div>
               </div>
-              {selectedImages.map((image, index) => (
-                <div key={index} className="image_container">
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt={`Image ${index + 1}`}
-                  />
-                  <button onClick={() => handleImageRemove(index)}>
-                    Remove
-                  </button>
-                </div>
-              ))}
+              <div className="image_preview">
+                {images.existing.map((image, index) => (
+                  <div key={`existing-${index}`} className="image_container">
+                    <img
+                      src={`http://localhost:8000/${image.url}`}
+                      alt={`existing preview ${index}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove(index, "existing")}
+                      className="remove-btn"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                {images.new.map((image, index) => (
+                  <div key={`new-${index}`} className="image_container">
+                    <img src={image.preview} alt={`new preview ${index}`} />
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove(index, "new")}
+                      className="remove-btn"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
               <input
                 type="file"
                 multiple

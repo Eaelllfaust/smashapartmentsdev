@@ -6,6 +6,7 @@ import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Editservice() {
+
   const { user, loading } = useContext(UserContext);
   const navigate = useNavigate();
   const [existingImages, setExistingImages] = useState([]);
@@ -13,11 +14,10 @@ export default function Editservice() {
     existing: [], 
     new: [], 
   });
-
   const id = new URLSearchParams(location.search).get("id");
-
   const [selectedImages, setSelectedImages] = useState([]);
   const fileInputRef = useRef(null);
+
   const [state, setState] = React.useState({
     serviceName: "",
     description: "",

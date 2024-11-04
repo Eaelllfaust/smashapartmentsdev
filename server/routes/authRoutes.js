@@ -88,6 +88,7 @@ const {
   updateListing,
   getServiceListing,
   updateService,
+  getRentalListing,
 } = require("../controllers/authController");
 
 router.use(
@@ -168,6 +169,7 @@ router.get("/getcurrentrentals/:userId", getCurrentRentals);
 router.get("/checkliked/:id", checkLiked);
 router.get("/getlisting/:id", getStayListing);
 router.get("/getservicelisting/:id", getServiceListing);
+router.get("/getrentallisting/:id", getRentalListing);
 router.get("/getpaymentmethod", getPaymentMethod);
 router.post("/createpartner", createPartner);
 router.post("/stayslisting", upload.array("images", 15), createStayListing);
