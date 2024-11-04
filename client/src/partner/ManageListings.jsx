@@ -223,6 +223,7 @@ export default function ManageListings() {
                   <option value="active">active</option>
                   <option value="inactive">inactive</option>
                 </select>
+                <Link to={`editlisting/editservice?id=${listing._id}`} className="select edit">Edit</Link>
               </div>
             );
           } else {
