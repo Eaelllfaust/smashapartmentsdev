@@ -246,12 +246,11 @@ export default function Editservice() {
               </div>
 
               <input
-                ref={fileInputRef}
                 type="file"
-                style={{ display: "none" }}
-                accept="image/*"
                 multiple
+                ref={fileInputRef}
                 onChange={handleImageSelect}
+                style={{ display: "none" }}
               />
             </div>
             <div className="list_2 v85">

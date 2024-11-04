@@ -19,6 +19,7 @@ export default function Editrental() {
   const fileInputRef = useRef(null);
 
   const [state, setState] = React.useState({
+
     carNameModel: "",
     carType: "",
     description: "",
@@ -41,9 +42,11 @@ export default function Editrental() {
     contactName: "",
     contactPhone: "",
     contactEmail: "",
+
   });
 
   useEffect(() => {
+
     if (loading) return;
     if (!user) {
       navigate("/signin");
@@ -52,6 +55,7 @@ export default function Editrental() {
     } else if (id) {
       fetchListingData(id);
     }
+    
   }, [user, loading, navigate, id]);
 
 
@@ -97,6 +101,7 @@ export default function Editrental() {
   };
 
   const handleImageSelect = (e) => {
+
     const files = Array.from(e.target.files);
     const validFiles = files.filter((file) => file.size <= 8 * 1024 * 1024);
 
@@ -110,8 +115,10 @@ export default function Editrental() {
     }
 
     const newImages = validFiles.map((file) => ({
+
       file,
       preview: URL.createObjectURL(file),
+
     }));
 
     setImages((prev) => ({
@@ -123,15 +130,16 @@ export default function Editrental() {
   };
 
   const handleImageRemove = (index, type) => {
+
     setImages((prev) => ({
       ...prev,
       [type]: prev[type].filter((_, i) => i !== index),
     }));
 
-    // If removing a new image, revoke its object URL
     if (type === "new" && images.new[index]?.preview) {
       URL.revokeObjectURL(images.new[index].preview);
     }
+
   };
   const triggerFileInput = () => {
     fileInputRef.current.click();
@@ -220,7 +228,7 @@ export default function Editrental() {
                   </p>
                 </div>
               </div>
-              <div className="image_preview">
+        <div className="image_preview">
                 {images.existing.map((image, index) => (
                   <div key={`existing-${index}`} className="image_container">
                     <img
@@ -559,18 +567,7 @@ export default function Editrental() {
                     onChange={handleChange}
                   />
                   <br />
-                  <label htmlFor="contact-address">Address</label>
-                  <br />
-                  <input
-                    id="contact-address"
-                    className="input"
-                    type="text"
-                    placeholder="Address"
-                    name="contactAddress"
-                    value={state.contactAddress}
-                    onChange={handleChange}
-                  />
-                  <br />
+
                   <div className="button b2 stick" onClick={handleSubmit}>
                     Add listing
                   </div>

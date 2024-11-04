@@ -2915,11 +2915,10 @@ const uploadReceiptRental = async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    // Create new receipt record
     const receipt = new Receipts({
       booking_id: bookingId,
       media_name: req.file.filename,
-      media_location: req.file.path // Ensure this points to the correct location
+      media_location: req.file.path 
     });
 
     await receipt.save();
@@ -2933,7 +2932,7 @@ const uploadReceiptRental = async (req, res) => {
       }
     });
   } catch (error) {
-    // Clean up uploaded file if there's an error
+
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
@@ -3050,6 +3049,121 @@ const createRental = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const updateRental = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const { id } = req.params;
+    const existingRental = await CarRental.findById(id);
+    if (!existingRental) {
+      return res.status(404).json({ error: "Rental not found" });
+    }
+
+    const parsedBody = {
+      carNameModel: req.body.carNameModel,
+      carType: req.body.carType,
+      description: req.body.description,
+      carMakeModel: req.body.carMakeModel,
+      carColor: req.body.carColor,
+      plateNumber: req.body.plateNumber,
+      mileage: req.body.mileage,
+      driverName: req.body.driverName,
+      driverLicenseNumber: req.body.driverLicenseNumber,
+      driverPhoneNumber: req.body.driverPhoneNumber,
+      driverEmail: req.body.driverEmail,
+      rentalPrice: req.body.rentalPrice,
+      insurance: req.body.insurance,
+      fuel: req.body.fuel,
+      extraDriver: req.body.extraDriver === "true",
+      availableFrom: new Date(req.body.availableFrom),
+      availableTo: new Date(req.body.availableTo),
+      cancellationPolicy: req.body.cancellationPolicy,
+      refundPolicy: req.body.refundPolicy,
+      contactName: req.body.contactName,
+      contactPhone: req.body.contactPhone,
+      contactEmail: req.body.contactEmail,
+    };
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      Object.assign(existingRental, parsedBody);
+      await existingRental.save({ session });
+
+      // Handle existing images
+      const existingImages = req.body.existingImages;
+      const existingImageUrls = Array.isArray(existingImages) 
+        ? existingImages 
+        : existingImages ? [existingImages] : [];
+
+      const currentMediaTags = await MediaTag.find({ listing_id: id });
+
+      // Find media tags to delete (those not in existingImageUrls)
+      const toDelete = currentMediaTags.filter(
+        (tag) => !existingImageUrls.includes(tag.media_location)
+      );
+
+      if (toDelete.length > 0) {
+        await MediaTag.deleteMany(
+          {
+            listing_id: id,
+            media_location: { $in: toDelete.map(tag => tag.media_location) }
+          },
+          { session }
+        );
+      }
+
+      // Handle new images - Keep existing images and add new ones if provided
+      if (req.files && req.files.length > 0) {
+        const newMediaTags = req.files.map(file => ({
+          listing_id: existingRental._id,
+          media_name: file.filename,
+          media_location: file.path,
+          size: file.size,
+        }));
+
+        await MediaTag.insertMany(newMediaTags, { session });
+      }
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Get updated rental with all images
+      const updatedMediaTags = await MediaTag.find({ listing_id: id });
+      
+      res.status(200).json({
+        message: "Rental updated successfully",
+        rental: {
+          ...existingRental.toObject(),
+          images: updatedMediaTags.map(tag => ({
+            location: tag.media_location,
+            name: tag.media_name
+          }))
+        }
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error("Error updating rental:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 const updateListing = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -4591,6 +4705,7 @@ module.exports = {
   getServiceListing,
   getRentalListing,
   updateListing,
+  updateRental,
   updateService,
 
 };
