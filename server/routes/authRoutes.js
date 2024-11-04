@@ -90,6 +90,7 @@ const {
   updateService,
   getRentalListing,
   updateRental,
+  getOfficeListing,
 } = require("../controllers/authController");
 
 router.use(
@@ -170,6 +171,7 @@ router.get("/getcurrentrentals/:userId", getCurrentRentals);
 router.get("/checkliked/:id", checkLiked);
 router.get("/getlisting/:id", getStayListing);
 router.get("/getservicelisting/:id", getServiceListing);
+router.get("/getofficelisting/:id", getOfficeListing);
 router.get("/getrentallisting/:id", getRentalListing);
 router.get("/getpaymentmethod", getPaymentMethod);
 router.post("/createpartner", createPartner);

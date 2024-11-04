@@ -3050,6 +3050,7 @@ const createRental = async (req, res) => {
   }
 };
 const updateRental = async (req, res) => {
+  
   try {
     const { token } = req.cookies;
     if (!token) {
@@ -3477,13 +3478,52 @@ const getServiceListing = async (req, res) => {
         images,
       },
     });
+  } catch (error) {
+    console.error("Error fetching stay listing:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getOfficeListing = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const listingId = req.params.id;
+    const stayListing = await OfficeSpace.findById(listingId).lean();
+    if (!stayListing) {
+      return res.status(404).json({ error: "Stay listing not found" });
+    }
+
+    const mediaTags = await MediaTag.find({ listing_id: listingId });
+    const images = mediaTags.map((media) => ({
+      name: media.media_name,
+      location: media.media_location,
+      size: media.size,
+    }));
+
+    res.status(200).json({
+      message: "Stay listing fetched successfully",
+      officeListing: {
+        ...stayListing,
+        images,
+      },
+    });
 
   } catch (error) {
     console.error("Error fetching stay listing:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-   
 };
+
 const getRentalListing = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -4704,6 +4744,7 @@ module.exports = {
   getStayListing,
   getServiceListing,
   getRentalListing,
+  getOfficeListing,
   updateListing,
   updateRental,
   updateService,

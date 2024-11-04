@@ -201,6 +201,7 @@ export default function ManageListings() {
                   <option value="active">active</option>
                   <option value="inactive">inactive</option>
                 </select>
+                <Link to={`editlisting/editoffice?id=${listing._id}`} className="select edit">Edit</Link>
               </div>
             );
           } else if (listing.type === "service") {

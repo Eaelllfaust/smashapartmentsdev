@@ -55,7 +55,7 @@ export default function Editservice() {
       const response = await axios.get(`/getservicelisting/${listingId}`);
       const data = response.data.serviceListing;
       setState({
-        serviceName: data.serviceName, // Mapping to the corresponding state field
+        serviceName: data.serviceName, 
         description: data.description,
         carMakeModel: data.carMakeModel,
         carColor: data.carColor,
@@ -64,11 +64,11 @@ export default function Editservice() {
         driverLicenseNumber: data.driverLicenseNumber,
         driverPhoneNumber: data.driverPhoneNumber,
         driverEmail: data.driverEmail,
-        pickupPrice: data.pickupPrice, // Assuming it's a number
-        extraLuggage: data.extraLuggage, // Assuming it's a string (e.g., price)
-        waitingTime: data.waitingTime, // Assuming it's a string (e.g., time in seconds)
-        availableFrom: data.availableFrom.slice(0, 10), // Formatting to YYYY-MM-DD
-        availableTo: data.availableTo.slice(0, 10), // Formatting to YYYY-MM-DD
+        pickupPrice: data.pickupPrice,
+        extraLuggage: data.extraLuggage,
+        waitingTime: data.waitingTime,
+        availableFrom: data.availableFrom.slice(0, 10),
+        availableTo: data.availableTo.slice(0, 10),
         cancellationPolicy: data.cancellationPolicy,
         refundPolicy: data.refundPolicy,
         contactName: data.contactName,
