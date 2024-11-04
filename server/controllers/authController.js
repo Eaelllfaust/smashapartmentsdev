@@ -3675,6 +3675,130 @@ const createStayListing = async (req, res) => {
   }
 };
 
+const updateOffice = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const { id } = req.params;
+    const existingOffice = await OfficeSpace.findById(id);
+    if (!existingOffice) {
+      return res.status(404).json({ error: "Office listing not found" });
+    }
+
+    // Parse form data for updating fields
+    const parsedBody = {
+      office_space_name: req.body.officeSpaceName,
+      city: req.body.city,
+      state_name: req.body.state_name,
+      office_type: req.body.officeType,
+      description: req.body.description,
+      size_of_office: parseInt(req.body.size),
+      number_of_desks: parseInt(req.body.numDesks),
+      wifi: req.body.wifi === "true",
+      conference_room: req.body.conferenceRooms === "true",
+      parking: req.body.parking === "true",
+      printers: req.body.printers === "true",
+      pets: req.body.pets === "true",
+      smoking: req.body.smoking === "true",
+      no_loud_noises: req.body.noises === "true",
+      catering: req.body.catering === "true",
+      administrative_support: req.body.support === "true",
+      price_per_day: parseFloat(req.body.pricePerDay),
+      price_weekly: parseFloat(req.body.pricePerWeek),
+      price_monthly: parseFloat(req.body.pricePerMonth),
+      available_from: new Date(req.body.availableFrom),
+      available_to: new Date(req.body.availableTo),
+      cancellation_policy: req.body.cancellationPolicy,
+      refund_policy: req.body.refundPolicy,
+      contact_name: req.body.contactName,
+      contact_phone: req.body.contactPhone,
+      contact_email: req.body.contactEmail,
+      security_levy: req.body.securityDeposit,
+    };
+
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Update the office listing fields
+      Object.assign(existingOffice, parsedBody);
+      await existingOffice.save({ session });
+
+      // Handle existing images
+      const existingImages = req.body.existingImages;
+      const existingImageUrls = Array.isArray(existingImages)
+        ? existingImages
+        : existingImages ? [existingImages] : [];
+
+      // Get current media tags
+      const currentMediaTags = await MediaTag.find({ listing_id: id });
+
+      // Identify media tags to delete (those not in existingImageUrls)
+      const toDelete = currentMediaTags.filter(
+        (tag) => !existingImageUrls.includes(tag.media_location)
+      );
+
+      // Delete only the removed media tags
+      if (toDelete.length > 0) {
+        await MediaTag.deleteMany(
+          {
+            listing_id: id,
+            media_location: { $in: toDelete.map(tag => tag.media_location) }
+          },
+          { session }
+        );
+      }
+
+      // Handle new images - Keep existing images and add new ones
+      if (req.files && req.files.length > 0) {
+        const newMediaTags = req.files.map(file => ({
+          listing_id: existingOffice._id,
+          media_name: file.filename,
+          media_location: file.path,
+          size: file.size,
+        }));
+
+        await MediaTag.insertMany(newMediaTags, { session });
+      }
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Retrieve updated media tags for response
+      const updatedMediaTags = await MediaTag.find({ listing_id: id });
+
+      res.status(200).json({
+        message: "Office listing updated successfully",
+        office_listing: {
+          ...existingOffice.toObject(),
+          images: updatedMediaTags.map(tag => ({
+            location: tag.media_location,
+            name: tag.media_name,
+          }))
+        }
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error("Error updating office listing:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 const createOfficeListing = async (req, res) => {
   try {
@@ -4747,6 +4871,7 @@ module.exports = {
   getOfficeListing,
   updateListing,
   updateRental,
+  updateOffice,
   updateService,
 
 };

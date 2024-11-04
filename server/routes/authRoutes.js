@@ -91,6 +91,7 @@ const {
   getRentalListing,
   updateRental,
   getOfficeListing,
+  updateOffice,
 } = require("../controllers/authController");
 
 router.use(
@@ -178,6 +179,7 @@ router.post("/createpartner", createPartner);
 router.post("/stayslisting", upload.array("images", 15), createStayListing);
 router.put("/stayslisting/:id", upload.array("images", 15), updateListing);
 router.post("/coofficelisting", upload.array("images", 15), createOfficeListing);
+router.put("/coofficelisting/:id", upload.array("images", 15), updateOffice);
 router.post("/airportpickuplisting", upload.array("images", 15), createService);
 router.put("/airportpickuplisting/:id", upload.array("images", 15), updateService);
 router.post("/carrentalslisting", upload.array("images", 15), createRental);

@@ -102,20 +102,46 @@ export default function Editoffice() {
     }
   };
   const handleImageSelect = (e) => {
+
     const files = Array.from(e.target.files);
-    const newImages = files.filter((file) => file.size <= 5 * 1024 * 1024); // 5MB limit
-    if (selectedImages.length + newImages.length > 5) {
-      alert("You can only upload up to 5 images.");
-    } else {
-      setSelectedImages([...selectedImages, ...newImages]);
+    const validFiles = files.filter((file) => file.size <= 8 * 1024 * 1024);
+
+    if (validFiles.length < files.length) {
+      toast.error("Some files exceed the 8MB size limit.");
     }
-    e.target.value = ""; 
+
+    if (images.existing.length + images.new.length + validFiles.length > 15) {
+      toast.error("You can only upload up to 15 images.");
+      return;
+    }
+
+    const newImages = validFiles.map((file) => ({
+
+      file,
+      preview: URL.createObjectURL(file),
+
+    }));
+
+    setImages((prev) => ({
+      ...prev,
+      new: [...prev.new, ...newImages],
+    }));
+
+    e.target.value = "";
   };
 
-  const handleImageRemove = (indexToRemove) => {
-    setSelectedImages(
-      selectedImages.filter((_, index) => index !== indexToRemove)
-    );
+
+  const handleImageRemove = (index, type) => {
+
+    setImages((prev) => ({
+      ...prev,
+      [type]: prev[type].filter((_, i) => i !== index),
+    }));
+
+    if (type === "new" && images.new[index]?.preview) {
+      URL.revokeObjectURL(images.new[index].preview);
+    }
+
   };
 
   const triggerFileInput = () => {
@@ -124,125 +150,41 @@ export default function Editoffice() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setState((prevState) => ({
-      ...prevState,
+    setState({
+      ...state,
       [name]: type === "checkbox" ? checked : value,
-    }));
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!state.officeSpaceName) {
-      toast.error("Office space name is required.");
-      return;
-    }
-    if (!state.city) {
-      toast.error("City is required.");
-      return;
-    }
-    if (!state.state_name) {
-      toast.error("State is required.");
-      return;
-    }
-    if (!state.officeType) {
-      toast.error("Office type is required.");
-      return;
-    }
-    if (!state.pricePerDay || state.pricePerDay < 1000) {
-      toast.error("Price per day must be at least 1000.");
-      return;
-    }
-    if (!state.pricePerWeek) {
-      toast.error("Price per week is required.");
-      return;
-    }
-    if (!state.pricePerMonth) {
-      toast.error("Price per month is required.");
-      return;
-    }
-    if (!state.availableFrom) {
-      toast.error("Available from date is required.");
-      return;
-    }
-    if (!state.availableTo) {
-      toast.error("Available to date is required.");
-      return;
-    }
-    if (!state.cancellationPolicy) {
-      toast.error("Cancellation policy is required.");
-      return;
-    }
-    if (!state.refundPolicy) {
-      toast.error("Refund policy is required.");
-      return;
-    }
-    if (!state.contactName) {
-      toast.error("Contact name is required.");
-      return;
-    }
-    if (!state.contactPhone) {
-      toast.error("Contact phone is required.");
-      return;
-    }
-    if (!state.contactEmail) {
-      toast.error("Contact email is required.");
-      return;
-    }
-    if (new Date(state.availableFrom) >= new Date(state.availableTo)) {
-      toast.error(
-        "Available from date must be earlier than available to date."
-      );
-      return;
-    }
-    if (selectedImages.length < 4) {
-      toast.error("At least 4 images are required.");
-      return;
-    }
-
-    for (const image of selectedImages) {
-      if (image.size > 8 * 1024 * 1024) {
-        toast.error("Each image must be less than 8MB.");
-        return;
-      }
-    }
-
     const formData = new FormData();
+
     Object.keys(state).forEach((key) => {
-      if (typeof state[key] === "boolean") {
-        formData.append(key, state[key].toString());
-      } else {
-        formData.append(key, state[key]);
-      }
+      const value = state[key];
+      formData.append(
+        key,
+        typeof value === "boolean" ? value.toString() : value
+      );
     });
 
-    selectedImages.forEach((image, index) => {
-      formData.append("images", image);
+    images.new.forEach((image) => {
+      formData.append("images", image.file);
+    });
+  
+    images.existing.forEach((image) => {
+      formData.append("existingImages", image.url); 
     });
 
     try {
-      const response = await axios.post("/coofficelisting", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const response = await axios.put(`/coofficelisting/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-
-      if (response.data.error) {
-        toast.error(response.data.error);
-        if (response.data.details) {
-          response.data.details.forEach((detail) => toast.error(detail));
-        }
-      } else {
-        toast.success(response.data.message);
-        navigate("/partner/managelistings/");
-      }
+      toast.success(response.data.message);
     } catch (error) {
-      console.error("Error submitting form:", error);
       toast.error(
         error.response?.data?.error || "An error occurred. Please try again."
       );
-      if (error.response?.data?.details) {
-        error.response.data.details.forEach((detail) => toast.error(detail));
-      }
     }
   };
 
@@ -284,28 +226,44 @@ export default function Editoffice() {
                     image.
                   </p>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  style={{ display: "none" }}
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageSelect}
-                />
+          
               </div>
               <div className="image_preview">
-                {selectedImages.map((image, index) => (
-                  <div key={index} className="image_container">
+                {images.existing.map((image, index) => (
+                  <div key={`existing-${index}`} className="image_container">
                     <img
-                      src={URL.createObjectURL(image)}
-                      alt={`preview ${index}`}
+                      src={`http://localhost:8000/${image.url}`}
+                      alt={`existing preview ${index}`}
                     />
-                    <button onClick={() => handleImageRemove(index)}>
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove(index, "existing")}
+                      className="remove-btn"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                {images.new.map((image, index) => (
+                  <div key={`new-${index}`} className="image_container">
+                    <img src={image.preview} alt={`new preview ${index}`} />
+                    <button
+                      type="button"
+                      onClick={() => handleImageRemove(index, "new")}
+                      className="remove-btn"
+                    >
                       Remove
                     </button>
                   </div>
                 ))}
               </div>
+              <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                onChange={handleImageSelect}
+                style={{ display: "none" }}
+              />
             </div>
             <div className="list_2 v85">
               <form onSubmit={handleSubmit}>
