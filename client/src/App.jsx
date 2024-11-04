@@ -96,6 +96,7 @@ import SigninAdmin from "./SiginAdmin";
 import Privacy from "./Privacy";
 import TermsOfUse from "./Termsofuse";
 import Editstays from "./partner/editstays";
+import Editservice from "./partner/Editservice";
 
 axios.defaults.baseURL = "http://localhost:8000";
 axios.defaults.withCredentials = true;
@@ -163,6 +164,7 @@ function App() {
         <Route path="/partner/managelistings/addlisting" element={<AddListing />} />
         <Route path="/partner/managelistings/addlisting/addstays" element={<AddStays />} />
         <Route path="/partner/managelistings/editlisting/editstays" element={<Editstays />} />
+        <Route path="/partner/managelistings/editlisting/editservice" element={<Editservice />} />
         <Route path="/partner/managelistings/addlisting/addcooffice" element={<AddCooffice />} />
         <Route path="/partner/managelistings/addlisting/addcarrentals" element={<AddCarRentals />} />
         <Route path="/partner/managelistings/addlisting/addairportpickup" element={<AddAirportPickup />} />

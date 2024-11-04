@@ -3175,8 +3175,6 @@ if (req.files && req.files.length > 0) {
   }
 };
 
-
-
 const getStayListing = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -3196,7 +3194,6 @@ const getStayListing = async (req, res) => {
       return res.status(404).json({ error: "Stay listing not found" });
     }
 
-    // Fetch related images
     const mediaTags = await MediaTag.find({ listing_id: listingId });
     const images = mediaTags.map((media) => ({
       name: media.media_name,
@@ -3211,10 +3208,12 @@ const getStayListing = async (req, res) => {
         images,
       },
     });
+
   } catch (error) {
     console.error("Error fetching stay listing:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+   
 };
 
 const createStayListing = async (req, res) => {

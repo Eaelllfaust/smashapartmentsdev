@@ -161,7 +161,7 @@ export default function ManageListings() {
               <div className="row_item rental" key={listing._id}>
                 <img
                   src={`http://localhost:8000/uploads/${listing.images[0].media_name}`}
-                  alt="Stay"
+                  alt="Rental"
                 />
                 <div>{listing.carNameModel}</div>
                 <div>{listing.carType}</div>
@@ -184,7 +184,7 @@ export default function ManageListings() {
               <div className="row_item office" key={listing._id}>
                 <img
                   src={`http://localhost:8000/uploads/${listing.images[0].media_name}`}
-                  alt="Stay"
+                  alt="Office"
                 />
                 <div>{listing.office_space_name}</div>
                 <div>{listing.city}</div>
@@ -207,7 +207,7 @@ export default function ManageListings() {
               <div className="row_item service" key={listing._id}>
                 <img
                   src={`http://localhost:8000/uploads/${listing.images[0].media_name}`}
-                  alt="Stay"
+                  alt="Service"
                 />
                 <div>{listing.serviceName}</div>
                 <div>{listing.carMakeModel}</div>
