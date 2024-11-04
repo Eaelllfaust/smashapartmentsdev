@@ -103,24 +103,31 @@ export default function CurrentBookings() {
       ],
     });
   };
+  const isCancellable = (createdAt) => {
+    const oneHour = 60 * 60 * 1000; // One hour in milliseconds
+    return new Date() - new Date(createdAt) < oneHour;
+  };
+  
   const cancelBooking = async (bookingId) => {
     try {
       const response = await axios.post(`/cancelbooking/${bookingId}`);
       if (response.status === 200) {
         setBookings(
           bookings.map((booking) =>
-            booking._id === bookingId
-              ? { ...booking, status: "cancelled" }
-              : booking
+            booking._id === bookingId ? { ...booking, status: "cancelled" } : booking
           )
         );
         toast.success("Booking cancelled successfully");
       }
     } catch (error) {
       console.error("Failed to cancel booking:", error);
-      toast.error("Failed to cancel booking");
+  
+      // Check if there’s an error response from the backend and display the specific message
+      const errorMessage = error.response?.data?.message || "Failed to cancel booking";
+      toast.error(errorMessage);
     }
   };
+  
   return (
     <>
       <div className="shade_2">
@@ -236,14 +243,12 @@ export default function CurrentBookings() {
                       </div>
                       <br />
                       <div className="action">
-                        {booking.status === "confirmed" && (
-                          <div
-                            className="new_btn_1"
-                            onClick={() => handleCancel(booking._id)}
-                          >
-                            Cancel
-                          </div>
-                        )}
+                      {booking.status === "confirmed" && isCancellable(booking.createdAt) && (
+  <div className="new_btn_1" onClick={() => handleCancel(booking._id)}>
+    Cancel
+  </div>
+)}
+
                       </div>
                       <div className="action">
                       <div 

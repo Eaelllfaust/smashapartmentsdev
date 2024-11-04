@@ -364,24 +364,32 @@ const cancelBooking = async (req, res) => {
   const { bookingId } = req.params;
 
   try {
-    const booking = await Booking.findByIdAndUpdate(
-      bookingId,
-      { status: "cancelled" },
-      { new: true }
-    );
+    // Find the booking without updating it initially
+    const booking = await Booking.findById(bookingId);
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    res
-      .status(200)
-      .json({ message: "Booking cancelled successfully", booking });
+    // Check if the booking was created more than an hour ago
+    const oneHourInMillis = 60 * 60 * 1000;
+    const timeDifference = Date.now() - new Date(booking.createdAt).getTime();
+
+    if (timeDifference > oneHourInMillis) {
+      return res.status(400).json({ message: "Booking cannot be cancelled as it was made more than an hour ago" });
+    }
+
+    // Proceed to cancel the booking if it's within the allowed time frame
+    booking.status = "cancelled";
+    await booking.save();
+
+    res.status(200).json({ message: "Booking cancelled successfully", booking });
   } catch (error) {
     console.error("Error cancelling booking:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const getUserPreferences = async (req, res) => {
   try {
@@ -965,7 +973,7 @@ const getCurrentBookings = async (req, res) => {
       })
     );
 
-    res.status(200).json(bookingsWithDetails.reverse());
+    res.status(200).json(bookingsWithDetails.reverse()); // Reverse to ascending order
   } catch (error) {
     console.error("Error fetching user bookings:", error);
     res.status(500).json({ error: "Failed to fetch user bookings" });
@@ -976,6 +984,8 @@ const getCurrentBookings = async (req, res) => {
 const getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
+
+   
     const [
       totalBookingCount,
       totalCoofficeCount,
@@ -996,12 +1006,12 @@ const getUserBookings = async (req, res) => {
       ServiceBooking.countDocuments({ userId, status: "reserved" }),
     ]);
 
+    // Calculate total and reserved bookings by summing the counts
     const totalBookings =
       totalBookingCount +
       totalCoofficeCount +
       totalRentalCount +
       totalServiceCount;
-
     const reservedBookings =
       reservedBookingCount +
       reservedCoofficeCount +
@@ -1016,8 +1026,8 @@ const getUserBookings = async (req, res) => {
 };
 
 const getUsers = async (req, res) => {
-
   try {
+    // Find users where account_type is not "admin" and exclude password from the results
     const users = await User.find(
       { account_type: { $ne: "admin" } },
       "-password"
@@ -1028,7 +1038,6 @@ const getUsers = async (req, res) => {
       .status(500)
       .json({ message: "Error fetching users", error: error.message });
   }
-
 };
 
 async function aggregateRevenueFromSchema(schema, schemaName, dateField = 'createdAt', priceField = 'totalPrice') {
@@ -1039,7 +1048,7 @@ async function aggregateRevenueFromSchema(schema, schemaName, dateField = 'creat
           _id: {
             $dateToString: { format: "%Y-%m-%d", date: `$${dateField}` }
           },
-          totalRevenue: { $sum: `$${priceField}` } 
+          totalRevenue: { $sum: `$${priceField}` } // Sum up the revenue using the correct price field
         }
       },
       { $sort: { _id: 1 } }
