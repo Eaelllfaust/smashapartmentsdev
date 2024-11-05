@@ -2804,25 +2804,22 @@ const uploadReceiptPickup = async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
     if (!allowedTypes.includes(req.file.mimetype)) {
-      // Delete the invalid file
+
       fs.unlinkSync(req.file.path);
       return res.status(400).json({ error: "Invalid file type. Only images and PDFs are allowed." });
     }
 
     const bookingId = req.params.bookingId;
-    
-    // Verify booking exists
+
     const booking = await ServiceBooking.findById(bookingId);
     if (!booking) {
-      // Delete the uploaded file if booking doesn't exist
+
       fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    // Create new receipt record
     const receipt = new Receipts({
       booking_id: bookingId,
       media_name: req.file.filename,
@@ -3644,7 +3641,6 @@ const createStayListing = async (req, res) => {
 
     await newStayListing.save();
 
-    // Saving uploaded images
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const mediaTag = new MediaTag({
@@ -3694,7 +3690,6 @@ const updateOffice = async (req, res) => {
       return res.status(404).json({ error: "Office listing not found" });
     }
 
-    // Parse form data for updating fields
     const parsedBody = {
       office_space_name: req.body.officeSpaceName,
       city: req.body.city,
