@@ -2810,7 +2810,7 @@ const uploadReceiptPickup = async (req, res) => {
       fs.unlinkSync(req.file.path);
       return res.status(400).json({ error: "Invalid file type. Only images and PDFs are allowed." });
     }
-
+    
     const bookingId = req.params.bookingId;
 
     const booking = await ServiceBooking.findById(bookingId);
