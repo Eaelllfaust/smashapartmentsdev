@@ -15,6 +15,7 @@ export default function ReserveStays() {
   const [numPeople, setNumPeople] = useState("");
   const [numRooms, setNumRooms] = useState("");
   const [totalPrice, setTotalPrice] = useState(0);
+  const [finalPriceNew, setFinalPrice] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const { user } = useContext(UserContext);
 
@@ -118,7 +119,8 @@ export default function ReserveStays() {
       commission +
       vat +
       (finalSecurityLevy > 0 ? finalSecurityLevy : 0);
-
+ 
+  
     // Proceed with payment
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
@@ -126,7 +128,7 @@ export default function ReserveStays() {
       amount: finalPrice * 100, // Amount in kobo
       email: user.email,
       onSuccess: (transaction) => {
-        verifyPaymentAndBook(transaction.reference);
+        verifyPaymentAndBook(transaction.reference, finalPrice);
       },
       onCancel: () => {
         toast.error("Payment cancelled. Please try again.");
@@ -134,7 +136,8 @@ export default function ReserveStays() {
     });
   };
 
-  const verifyPaymentAndBook = async (reference) => {
+  const verifyPaymentAndBook = async (reference, final) => {
+
     try {
       const response = await axios.post("/verify_payment", {
         reference,
@@ -143,7 +146,7 @@ export default function ReserveStays() {
         checkOutDate,
         numPeople,
         numRooms,
-        totalPrice,
+        final,
       });
 
       if (response.status === 201) {

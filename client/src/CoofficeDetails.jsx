@@ -3,6 +3,8 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { UserContext } from '../context/userContext'; 
+import SecurityLevyInfo from './SecurityLevyInfo';
+
 
 export default function CoofficeDetails() {
   const navigate = useNavigate();
@@ -14,7 +16,7 @@ export default function CoofficeDetails() {
   const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
   const { user } = useContext(UserContext);
-
+  const [isSecurityLevyModalOpen, setIsSecurityLevyModalOpen] = useState(false);
   useEffect(() => {
     const fetchCooffice = async () => {
       try {
@@ -245,6 +247,19 @@ export default function CoofficeDetails() {
                   <div>NGN {cooffice.price_monthly?.toLocaleString() || '0.00'}</div>
                 </div>
               </div>
+              {cooffice.security_levy ? (
+        <div
+          className="note"
+          onClick={() => setIsSecurityLevyModalOpen(true)}
+        >
+          <p>
+            <i className="bx bx-info-circle"></i> Security levy of NGN{' '}
+            {Number(cooffice.security_levy)?.toLocaleString()} attached
+          </p>
+        </div>
+      ) : (
+        <div></div>
+      )}
             </div>
             <br />
             <div>
@@ -271,6 +286,10 @@ export default function CoofficeDetails() {
           </div>
         </div>
       </section>
+      <SecurityLevyInfo
+        isOpen={isSecurityLevyModalOpen}
+        onClose={() => setIsSecurityLevyModalOpen(false)}
+      />
     </>
   );
 }

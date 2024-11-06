@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { UserContext } from "../context/userContext";
 import { toast } from "react-toastify";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export default function ReserveCooffice() {
   const [searchParams] = useSearchParams();
@@ -12,6 +12,7 @@ export default function ReserveCooffice() {
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
   const [totalPrice, setTotalPrice] = useState(0);
+  const [finalPriceNew, setFinalPrice] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const { user } = useContext(UserContext);
 
@@ -32,8 +33,8 @@ export default function ReserveCooffice() {
     fetchOfficeDetails();
 
     // Load Paystack script
-    const script = document.createElement('script');
-    script.src = 'https://js.paystack.co/v2/inline.js';
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v2/inline.js";
     script.async = true;
     document.body.appendChild(script);
 
@@ -53,7 +54,7 @@ export default function ReserveCooffice() {
       if (numberOfDays >= 30) {
         price = officeDetails.price_monthly;
       } else if (numberOfDays >= 7) {
-        price = officeDetails.price_weekly * (Math.floor(numberOfDays / 7));
+        price = officeDetails.price_weekly * Math.floor(numberOfDays / 7);
         price += officeDetails.price_per_day * (numberOfDays % 7);
       } else {
         price = officeDetails.price_per_day * numberOfDays;
@@ -77,76 +78,79 @@ export default function ReserveCooffice() {
       toast.error("Please create an account or sign in to continue.");
       return;
     }
-  
-    if (user.interface !== 'user') {
+
+    if (user.interface !== "user") {
       toast.error("Please Signin as a customer to continue.");
       return;
     }
-  
+
     if (!checkInDate || !checkOutDate) {
       toast.error("Please fill in all the required fields.");
       return;
     }
-  
+
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
     const today = new Date();
-  
+
     if (checkIn < today) {
       toast.error("Check-in date cannot be in the past.");
       return;
     }
-  
+
     if (checkOut < checkIn) {
       toast.error("Check-out date must be after check-in date.");
       return;
     }
-  
+
     if (checkOut.getFullYear() - checkIn.getFullYear() > 1) {
       toast.error("Booking period cannot exceed 1 year.");
       return;
     }
 
     // Calculate final price including all fees
-    const commission = totalPrice * 0.1;  // 10% commission
-    const vat = totalPrice * 0.075;       // 7.5% VAT
+    const commission = totalPrice * 0.1; // 10% commission
+    const vat = totalPrice * 0.075; // 7.5% VAT
     const finalSecurityLevy = securityLevy ? Number(securityLevy) : 0;
     const finalPrice = totalPrice + commission + vat + finalSecurityLevy;
-  
+
     // Proceed with payment
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
-      key: 'pk_test_aa805fbdf79594d452dd669b02148a98482bae70',
+      key: "pk_test_aa805fbdf79594d452dd669b02148a98482bae70",
       amount: finalPrice * 100, // Amount in kobo
       email: user.email,
       onSuccess: (transaction) => {
-        verifyPaymentAndBook(transaction.reference);
+        verifyPaymentAndBook(transaction.reference, finalPrice);
       },
       onCancel: () => {
         toast.error("Payment cancelled. Please try again.");
-      }
+      },
     });
   };
 
-  const verifyPaymentAndBook = async (reference) => {
+  const verifyPaymentAndBook = async (reference, final) => {
     try {
-      const response = await axios.post('/verify_payment_cooffice', {
+      const response = await axios.post("/verify_payment_cooffice", {
         reference,
         officeId,
         checkInDate,
         checkOutDate,
-        totalPrice
+        final,
       });
 
       if (response.status === 201) {
         toast.success(response.data.message);
-        navigate('/user');
+        navigate("/user");
       } else {
         toast.error("Booking failed. Please try again.");
       }
     } catch (error) {
       console.error("Error verifying payment and creating booking:", error);
-      toast.error(error.response?.data?.error || "An error occurred. Please try again later.");
+      toast.error(
+        error.response?.data?.error ||
+          "An error occurred. Please try again later."
+      );
     }
   };
 
@@ -185,7 +189,14 @@ export default function ReserveCooffice() {
                         <h2>{officeDetails.office_space_name}</h2>
                         <div className="star_holder">
                           {[...Array(5)].map((_, i) => (
-                            <i key={i} className={`bx bx-star ${i < Math.floor(officeDetails.averageRating || 0) ? 'bxs-star' : ''}`} />
+                            <i
+                              key={i}
+                              className={`bx bx-star ${
+                                i < Math.floor(officeDetails.averageRating || 0)
+                                  ? "bxs-star"
+                                  : ""
+                              }`}
+                            />
                           ))}
                         </div>
                       </div>
@@ -194,27 +205,30 @@ export default function ReserveCooffice() {
                       </h3>
                     </div>
                     <div style={{ display: "flex", alignItems: "center" }}>
-                    <div className="n94">
-                      <h3>
-                        {officeDetails.averageRating >= 4.5 ? "Excellent" : "Good"}
-                      </h3>
-                      <h3>
-                        {officeDetails.reviewCount
-                          ? `${officeDetails.reviewCount} reviews`
-                          : "No reviews"}
-                      </h3>
+                      <div className="n94">
+                        <h3>
+                          {officeDetails.averageRating >= 4.5
+                            ? "Excellent"
+                            : "Good"}
+                        </h3>
+                        <h3>
+                          {officeDetails.reviewCount
+                            ? `${officeDetails.reviewCount} reviews`
+                            : "No reviews"}
+                        </h3>
+                      </div>
+                      <div
+                        className="rating_cont"
+                        style={{
+                          marginLeft: 10,
+                          maxWidth: "50px !important",
+                          minWidth: "100px !important",
+                        }}
+                      >
+                        {officeDetails.averageRating || "N/A"}{" "}
+                        <i className="bx bxs-star"></i>
+                      </div>
                     </div>
-                    <div
-                      className="rating_cont"
-                      style={{
-                        marginLeft: 10,
-                        maxWidth: "50px !important",
-                        minWidth: "100px !important",
-                      }}
-                    >
-                      {officeDetails.averageRating || "N/A"} <i className="bx bxs-star"></i>
-                    </div>
-                  </div>
                   </div>
                   <div className="l33">
                     <div className="o93">
@@ -226,7 +240,9 @@ export default function ReserveCooffice() {
                         <div>Daily rate</div>
                       </div>
                       <div className="amount_main">
-                        <h1>NGN {officeDetails.price_per_day.toLocaleString()}</h1>
+                        <h1>
+                          NGN {officeDetails.price_per_day.toLocaleString()}
+                        </h1>
                       </div>
                       <div className="o33">
                         <div>Includes taxes</div>
@@ -250,7 +266,7 @@ export default function ReserveCooffice() {
               </div>
             </div>
           </div>
-<br />
+          <br />
           <div className="detail">
             <h2>Confirm booking details</h2>
             <br />
@@ -312,18 +328,23 @@ export default function ReserveCooffice() {
               </div>
               <div className="l02_1">
                 <div>Security Levy</div>
-                <div>NGN {Number(officeDetails?.security_levy || 0).toLocaleString()}</div>
+                <div>
+                  NGN{" "}
+                  {Number(officeDetails?.security_levy || 0).toLocaleString()}
+                </div>
               </div>
             </div>
             <h2>Total</h2>
             <br />
             <h2 className="sum">
-              NGN {(
+              NGN{" "}
+              {(
                 totalPrice +
                 totalPrice * 0.1 + // Commission
                 totalPrice * 0.075 + // VAT
-                Number(officeDetails?.security_levy || 0) // Security Levy
-              ).toLocaleString()}
+                Number(officeDetails?.security_levy || 0)
+              ) // Security Levy
+                .toLocaleString()}
             </h2>
             <br />
             <div

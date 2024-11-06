@@ -755,7 +755,12 @@ const reserveAndBookPickup = async (req, res) => {
     });
 
     await newServiceBooking.save();
-
+    await sendNewBookingEmailPickup(decoded.email, {
+      serviceId,
+      arrivalDate: arrivalDate,
+      arrivalTime: arrivalTime,
+      totalAmount: totalPrice
+    });
     res.status(201).json({
       message:
         "Payment verified and pickup service booking created successfully",
@@ -1928,7 +1933,6 @@ const getUpcomingBookings = async (req, res) => {
     const { userId } = req.params;
     const today = new Date();
 
-    // Fetch all listings owned by the user
     const [stayListings, rentals, services, coofficeSpaces] = await Promise.all(
       [
         StayListing.find({ owner: userId }).lean(),
@@ -1937,14 +1941,12 @@ const getUpcomingBookings = async (req, res) => {
         OfficeSpace.find({ owner: userId }).lean(),
       ]
     );
-
-    // Extract listing IDs
+ 
     const stayListingIds = stayListings.map((listing) => listing._id);
     const rentalIds = rentals.map((rental) => rental._id);
     const serviceIds = services.map((service) => service._id);
     const coofficeSpaceIds = coofficeSpaces.map((space) => space._id);
 
-    // Fetch confirmed bookings from all schemas
     const [stayBookings, rentalBookings, serviceBookings, coofficeBookings] =
       await Promise.all([
         Booking.find({
@@ -1965,7 +1967,6 @@ const getUpcomingBookings = async (req, res) => {
         }).lean(),
       ]);
 
-    // Combine all upcoming bookings
     const upcomingBookings = [
       ...stayBookings,
       ...rentalBookings,
@@ -2330,6 +2331,222 @@ const getInactiveListings = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch inactive listings" });
   }
 };
+const sendNewBookingEmail = async (email, bookingDetails) => {
+  const listing = await StayListing.findById(bookingDetails.listingId).lean();
+  const propertyName = listing.property_name;
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your SmashApartment.com Booking Confirmation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking Awaiting Confirmation</h1>
+        <p>Hello,</p>
+        <p>Thank you for choosing SmashApartment.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
+        
+        <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
+            <p><strong>Check-in:</strong> ${bookingDetails.checkIn}</p>
+            <p><strong>Check-out:</strong> ${bookingDetails.checkOut}</p>
+            <p><strong>Guests:</strong> ${bookingDetails.guests}</p>
+            <p><strong>Total Amount:</strong> ${bookingDetails.totalAmount}</p>
+        </div>
+
+        <p>What happens next?</p>
+        <ul style="padding-left: 20px;">
+            <li>The property owner will review your booking request</li>
+            <li>You will receive a confirmation email within 24 hours</li>
+            <li>No payment will be processed until your booking is confirmed</li>
+        </ul>
+
+        <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject: "Your SmashApartment.com Booking Request",
+    text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
+    html: htmlTemplate,
+    category: "Booking Confirmation",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Booking confirmation email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending booking confirmation email:", error);
+    throw error;
+  }
+};
+const sendNewBookingEmailOffice = async (email, bookingDetails) => {
+  const listing = await OfficeSpace.findById(bookingDetails.officeId).lean();
+  const propertyName = listing.office_space_name;
+  const officeType = listing.office_type;
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your SmashApartment.com Booking Confirmation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking Awaiting Confirmation</h1>
+        <p>Hello,</p>
+        <p>Thank you for choosing SmashApartment.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
+        
+        <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
+            <p><strong>Check-in:</strong> ${bookingDetails.checkIn}</p>
+            <p><strong>Check-out:</strong> ${bookingDetails.checkOut}</p>
+            <p><strong>Office type:</strong> ${officeType}</p>
+            <p><strong>Total Amount:</strong> ${bookingDetails.totalAmount}</p>
+        </div>
+
+        <p>What happens next?</p>
+        <ul style="padding-left: 20px;">
+            <li>The property owner will review your booking request</li>
+            <li>You will receive a confirmation email within 24 hours</li>
+            <li>No payment will be processed until your booking is confirmed</li>
+        </ul>
+
+        <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject: "Your SmashApartment.com Booking Request",
+    text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
+    html: htmlTemplate,
+    category: "Booking Confirmation",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Booking confirmation email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending booking confirmation email:", error);
+    throw error;
+  }
+};
+const sendNewBookingEmailPickup = async (email, bookingDetails) => {
+  const listing = await Service.findById(bookingDetails.serviceId).lean();
+  const propertyName = listing.serviceName;
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your SmashApartment.com Booking Confirmation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking Awaiting Confirmation</h1>
+        <p>Hello,</p>
+        <p>Thank you for choosing SmashApartment.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
+        
+        <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
+            <p><strong>Arrival date:</strong> ${bookingDetails.arrivalDate}</p>
+            <p><strong>Arrival time:</strong> ${bookingDetails.arrivalTime}</p>
+            <p><strong>Total Amount:</strong> ${bookingDetails.totalAmount}</p>
+        </div>
+
+        <p>What happens next?</p>
+        <ul style="padding-left: 20px;">
+            <li>The property owner will review your booking request</li>
+            <li>You will receive a confirmation email within 24 hours</li>
+            <li>No payment will be processed until your booking is confirmed</li>
+        </ul>
+
+        <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject: "Your SmashApartment.com Booking Request",
+    text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
+    html: htmlTemplate,
+    category: "Booking Confirmation",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Booking confirmation email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending booking confirmation email:", error);
+    throw error;
+  }
+};
 const verifyPaymentAndBook = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -2340,7 +2557,7 @@ const verifyPaymentAndBook = async (req, res) => {
       checkOutDate,
       numPeople,
       numRooms,
-      totalPrice,
+      final,
     } = req.body;
 
     if (!token) {
@@ -2387,13 +2604,20 @@ const verifyPaymentAndBook = async (req, res) => {
       checkOutDate,
       numPeople,
       numRooms,
-      totalPrice,
+      totalPrice: final,
       paymentReference: reference,
       status: "pending",
     });
 
     await newBooking.save();
-
+   
+    await sendNewBookingEmail(decoded.email, {
+      listingId,
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      guests: numPeople,
+      totalAmount: final
+    });
     res
       .status(201)
       .json({ message: "Payment verified and booking created successfully" });
@@ -2507,7 +2731,7 @@ const verifyPaymentAndBookRental = async (req, res) => {
 const verifyPaymentAndBookCooffice = async (req, res) => {
   try {
     const { token } = req.cookies;
-    const { reference, officeId, checkInDate, checkOutDate, totalPrice } =
+    const { reference, officeId, checkInDate, checkOutDate, final } =
       req.body;
 
     if (!token) {
@@ -2553,13 +2777,18 @@ const verifyPaymentAndBookCooffice = async (req, res) => {
       officeId,
       checkInDate,
       checkOutDate,
-      totalPrice,
+      totalPrice: final,
       paymentReference: reference,
       status: "pending",
     });
 
     await newCoofficeBooking.save();
-
+    await sendNewBookingEmailOffice(decoded.email, {
+      officeId,
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      totalAmount: final
+    });
     res.status(201).json({
       message: "Payment verified and cooffice booking created successfully",
     });

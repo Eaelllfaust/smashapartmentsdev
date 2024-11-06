@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { ImageRow, Modal } from "./ImageRow"; // Adjust the path if necessary
 import styled from "styled-components";
 import MapModal from "./MapModal";
+import SecurityLevyInfo from './SecurityLevyInfo';
 
 export default function StaysDetails() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function StaysDetails() {
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [liked, setLiked] = useState(false);
   const { user } = useContext(UserContext);
+  const [isSecurityLevyModalOpen, setIsSecurityLevyModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -330,6 +332,20 @@ export default function StaysDetails() {
                     NGN {listing.price_per_night?.toLocaleString() || "0.00"}
                   </div>
                 </div>
+                {listing.security_levy ? (
+        <div
+          className="note"
+          onClick={() => setIsSecurityLevyModalOpen(true)}
+        >
+          <p>
+            <i className="bx bx-info-circle"></i> Security levy of NGN{' '}
+            {Number(listing.security_levy)?.toLocaleString()} attached
+          </p>
+        </div>
+      ) : (
+        <div></div>
+      )}
+                
               </div>
             </div>
             <br />
@@ -361,6 +377,11 @@ export default function StaysDetails() {
           </div>
         </div>
       </section>
+      <SecurityLevyInfo
+        isOpen={isSecurityLevyModalOpen}
+        onClose={() => setIsSecurityLevyModalOpen(false)}
+      
+      />
     </>
   );
 }
