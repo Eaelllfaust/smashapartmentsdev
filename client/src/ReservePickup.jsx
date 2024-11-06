@@ -11,6 +11,9 @@ export default function ReservePickup() {
   const [arrivalDate, setArrivalDate] = useState("");
   const [arrivalTime, setArrivalTime] = useState("");
   const [totalPrice, setTotalPrice] = useState(0);
+  const [commission, setCommission] = useState(0);
+  const [vat, setVAT] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(0);
   const { user } = useContext(UserContext);
 
   const serviceId = searchParams.get("id");
@@ -21,6 +24,7 @@ export default function ReservePickup() {
         const response = await axios.get(`/getpickupdata/${serviceId}`);
         setServiceDetails(response.data);
         setTotalPrice(response.data.pickupPrice);
+        calculateFinalPrice(response.data.pickupPrice);
       } catch (error) {
         console.error("Error fetching service details:", error);
         toast.error("Failed to load service details. Please try again later.");
@@ -47,10 +51,25 @@ export default function ReservePickup() {
 
       if (selectedDate >= availableFrom && selectedDate <= availableTo) {
         setArrivalDate(e.target.value);
+        calculateFinalPrice(serviceDetails.pickupPrice);
       } else {
         toast.error("Selected date is outside the available range.");
       }
     }
+  };
+
+  const handleTimeChange = (e) => {
+    setArrivalTime(e.target.value);
+    calculateFinalPrice(serviceDetails.pickupPrice);
+  };
+
+  const calculateFinalPrice = (price) => {
+    const commission = price * 0.1; // 10% commission
+    const vat = price * 0.075; // 7.5% VAT
+    const finalPrice = price + commission + vat;
+    setCommission(commission);
+    setVAT(vat);
+    setFinalPrice(finalPrice);
   };
 
   const handlePayment = () => {
@@ -81,7 +100,7 @@ export default function ReservePickup() {
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
       key: "pk_test_aa805fbdf79594d452dd669b02148a98482bae70", // Replace with your public key
-      amount: totalPrice * 100, // Amount in kobo
+      amount: finalPrice * 100, // Amount in kobo
       email: user.email,
       onSuccess: (transaction) => {
         verifyPaymentAndBook(transaction.reference);
@@ -99,7 +118,7 @@ export default function ReservePickup() {
         serviceId,
         arrivalDate,
         arrivalTime,
-        totalPrice,
+        totalPrice: finalPrice,
       });
 
       if (response.status === 201) {
@@ -120,7 +139,7 @@ export default function ReservePickup() {
   return (
     <>
       <div className="shade_2 df">
-        <h1>Search for airport pickups</h1>
+        <h1>Airport pickups</h1>
         <p>From budget rides to luxury cars and everything in between</p>
         <img
           src="/assets/linear_bg.png"
@@ -272,32 +291,38 @@ export default function ReservePickup() {
               </div>
               <br />
               <div className="l54">
-                <div>
-                  <h3>Checking availability</h3>
-                  <p>
-                    {arrivalDate && arrivalTime
-                      ? "Available"
-                      : "Please select date and time"}
-                  </p>
-                </div>
-              </div>
+          <div>
+            <h3>Checking availability</h3>
+            <p>
+              {arrivalDate && arrivalTime
+                ? "Available"
+                : "Please select date and time"}
+            </p>
+          </div>
+        </div>
               <br />
               <div>
                 <h2>Your price summary</h2>
                 <br />
                 <div className="l02">
-                  <div className="l02_1">
-                    <div>Pickup price</div>
-                    <div>
-                      NGN {serviceDetails?.pickupPrice.toLocaleString()}
-                    </div>
-                  </div>
+                <div className="l02_1">
+            <div>Pickup price</div>
+            <div>NGN {serviceDetails?.pickupPrice.toLocaleString()}</div>
+          </div>
+          <div className="l02_1">
+            <div>Commission (10%)</div>
+            <div>NGN {commission.toLocaleString()}</div>
+          </div>
+          <div className="l02_1">
+            <div>VAT (7.5%)</div>
+            <div>NGN {vat.toLocaleString()}</div>
+          </div>
                 </div>
                 <br />
                 <div>
                   <h2>Total</h2>
                   <br />
-                  <h2 className="sum">NGN {totalPrice.toLocaleString()}</h2>
+                  <h2 className="sum">NGN {finalPrice.toLocaleString()}</h2>
                 </div>
                 <br />
                 <div className="button b3 b2" onClick={handlePayment}>

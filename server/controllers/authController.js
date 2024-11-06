@@ -779,7 +779,7 @@ const getPickupData = async (req, res) => {
     const images = await MediaTag.find({ listing_id: id }).lean();
 
     // Aggregate to get the average rating and review count for the service
-    const reviewData = await Reviews.aggregate([
+   const reviewData = await Reviews.aggregate([
       { $match: { listingId: service._id } },
       {
         $group: {
@@ -790,7 +790,9 @@ const getPickupData = async (req, res) => {
       },
     ]);
 
-    const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+    // Check if reviewData has values and round the averageRating to 1 decimal place
+    const averageRating =
+      reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
     const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
     // Combine service data with images, rating, and review count
@@ -886,8 +888,10 @@ const getPickups = async (req, res) => {
             },
           },
         ]);
-
-        const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+    
+        // Check if reviewData has values and round the averageRating to 1 decimal place
+        const averageRating =
+          reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
         const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
         return { ...pickup, images, averageRating, reviewCount };
@@ -995,9 +999,9 @@ const getCoOfficeData = async (req, res) => {
       },
     ]);
 
-    // Assign average rating and review count, or set defaults if no reviews
-    const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
-    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+    const averageRating =
+    reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
+  const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
     // Combine cooffice data with images, review stats, and construct image URLs
     const coofficeWithDetails = {
@@ -2671,13 +2675,21 @@ const getListingData = async (req, res) => {
     }
 
     const images = await MediaTag.find({ listing_id: id }).lean();
-    const reviews = await Reviews.find({ listingId: id }).lean(); // Assuming you have a Review model
+    const reviewData = await Reviews.aggregate([
+      { $match: { listingId: listing._id } },
+      {
+        $group: {
+          _id: "$listingId",
+          averageRating: { $avg: { $toDouble: "$rating" } },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
 
-    // Calculate average rating and review count
-    const reviewCount = reviews.length;
-    const averageRating = reviewCount
-      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviewCount
-      : null;
+    const averageRating =
+    reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
+  const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
 
     const listingWithImages = {
       ...listing,
@@ -2785,8 +2797,10 @@ const getCooffices = async (req, res) => {
           },
         ]);
 
-        const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
-        const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
+        const averageRating =
+        reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
+      const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
         return {
           ...cooffice,
@@ -2904,9 +2918,8 @@ const getListings = async (req, res) => {
         ]);
 
         const averageRating =
-          reviewData.length > 0 ? reviewData[0].averageRating : null;
-        const reviewCount =
-          reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+        reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
+      const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
         return { ...listing, images, averageRating, reviewCount };
       })

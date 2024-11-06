@@ -51,7 +51,7 @@ export const ImageRow = ({ images, onImageClick }) => {
       ))}
       {images.length > 3 && (
         <ViewAllOverlay onClick={() => onImageClick(0)}>
-          <span>+{images.length - 3} more</span>
+          <span>+{images.length - 3}</span>
         </ViewAllOverlay>
       )}
     </ImageGrid>
