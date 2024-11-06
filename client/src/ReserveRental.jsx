@@ -18,7 +18,14 @@ export default function ReserveRental() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [insuranceAmount, setInsuranceAmount] = useState(0);
   const [fuelAmount, setFuelAmount] = useState(0);
+  const [commission, setCommission] = useState(0);
+  const [vat, setVAT] = useState(0);
+  const [waitingTimeFee, setWaitingTimeFee] = useState(500); // example waiting time fee
   const { user } = useContext(UserContext);
+  const [basePrice, setBasePrice] = useState(0);
+
+  const VAT_RATE = 0.075; // 7.5%
+  const COMMISSION_RATE = 0.10; // 10%
 
   const rentalId = searchParams.get("id");
 
@@ -27,8 +34,8 @@ export default function ReserveRental() {
       try {
         const response = await axios.get(`/getrentaldetails/${rentalId}`);
         setRentalDetails(response.data);
-        setInsuranceAmount(response.data.insurance_amount || 0);
-        setFuelAmount(response.data.fuel_amount || 0);
+        setInsuranceAmount(response.data.insurance || 0);
+        setFuelAmount(response.data.fuel || 0);
       } catch (error) {
         console.error("Error fetching rental details:", error);
         toast.error("Failed to load rental details. Please try again later.");
@@ -39,7 +46,6 @@ export default function ReserveRental() {
       fetchRentalDetails();
     }
 
-    // Load Paystack script
     const script = document.createElement("script");
     script.src = "https://js.paystack.co/v2/inline.js";
     script.async = true;
@@ -53,9 +59,9 @@ export default function ReserveRental() {
   useEffect(() => {
     if (rental && pickupDate && pickupTime) {
       const selectedDateTime = new Date(`${pickupDate}T${pickupTime}`);
-      const availableFromDate = new Date(rental.availableF0rom);
+      const availableFromDate = new Date(rental.availableFrom);
       const availableToDate = new Date(rental.availableTo);
-
+  
       if (
         selectedDateTime < availableFromDate ||
         selectedDateTime > availableToDate
@@ -65,23 +71,36 @@ export default function ReserveRental() {
         );
         return;
       }
-
-      let price = parseFloat(rental.rentalPrice) || 0;
-
-      // Add insurance and fuel amounts
-      price += parseFloat(rental.insurance) + parseFloat(rental.fuel);
-
+  
+      let calculatedBasePrice = parseFloat(rental.rentalPrice) || 0;
+      let insurance = parseFloat(insuranceAmount) || 0;
+      let fuel = parseFloat(fuelAmount) || 0;
+  
       // Calculate discount
       let discount = 0;
       if (rental.discount_percentage) {
-        discount = price * (parseFloat(rental.discount_percentage) / 100);
+        discount = (calculatedBasePrice + insurance + fuel) * (parseFloat(rental.discount_percentage) / 100);
       }
-
+  
+      // Price with discount
+      const priceWithDiscount = calculatedBasePrice + insurance + fuel - discount;
+  
+      // Calculate VAT and commission
+      const calculatedVat = priceWithDiscount * 0.075; // 7.5% VAT
+      const calculatedCommission = priceWithDiscount * 0.1; // 10% commission
+  
+      // Final price with VAT and commission
+      const finalPrice = priceWithDiscount + calculatedVat + calculatedCommission;
+  
+      // Update state with calculated values
+      setBasePrice(calculatedBasePrice);
       setDiscountAmount(discount);
-      setTotalPrice(price - discount);
+      setVAT(calculatedVat);
+      setCommission(calculatedCommission);
+      setTotalPrice(finalPrice);
     }
   }, [rental, pickupDate, pickupTime, withDriver, insuranceAmount, fuelAmount]);
-
+  
   const handlePayment = () => {
     if (!user) {
       toast.error("Please create an account or sign in to continue.");
@@ -115,11 +134,10 @@ export default function ReserveRental() {
       return;
     }
 
-    // Proceed with payment
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
-      key: "pk_test_aa805fbdf79594d452dd669b02148a98482bae70", // Replace with your public key
-      amount: Math.round(totalPrice * 100), // Amount in kobo, rounded to avoid decimal issues
+      key: "pk_test_aa805fbdf79594d452dd669b02148a98482bae70",
+      amount: Math.round(totalPrice * 100),
       email: user.email,
       onSuccess: (transaction) => {
         verifyPaymentAndBook(transaction.reference);
@@ -157,6 +175,7 @@ export default function ReserveRental() {
       );
     }
   };
+
   return (
     <>
       <div className="shade_2 df">
@@ -354,28 +373,34 @@ export default function ReserveRental() {
             <h2>Your price summary</h2>
             <br />
             <div className="l02">
-              <div className="l02_1">
-                <div>Original price</div>
-                <div>
-                  NGN {(totalPrice + discountAmount || 0).toLocaleString()}
-                </div>
-              </div>
-              <div className="l02_1">
-                <div>Discount</div>
-                <div>NGN {(discountAmount || 0).toLocaleString()}</div>
-              </div>
-              {insuranceAmount > 0 && (
-                <div className="l02_1">
-                  <div>Insurance</div>
-                  <div>NGN {(insuranceAmount || 0).toLocaleString()}</div>
-                </div>
-              )}
-              {fuelAmount > 0 && (
-                <div className="l02_1">
-                  <div>Fuel</div>
-                  <div>NGN {(fuelAmount || 0).toLocaleString()}</div>
-                </div>
-              )}
+            <div className="l02_1">
+    <div>Base Price</div>
+    <div>NGN {basePrice.toLocaleString()}</div>
+  </div>
+  <div className="l02_1">
+    <div>Discount</div>
+    <div>NGN {(discountAmount || 0).toLocaleString()}</div>
+  </div>
+  {insuranceAmount > 0 && (
+    <div className="l02_1">
+      <div>Insurance</div>
+      <div>NGN {(insuranceAmount || 0).toLocaleString()}</div>
+    </div>
+  )}
+  {fuelAmount > 0 && (
+    <div className="l02_1">
+      <div>Fuel</div>
+      <div>NGN {(fuelAmount || 0).toLocaleString()}</div>
+    </div>
+  )}
+  <div className="l02_1">
+    <div>VAT (7.5%)</div>
+    <div>NGN {vat.toLocaleString()}</div>
+  </div>
+  <div className="l02_1">
+    <div>Commission (10%)</div>
+    <div>NGN {commission.toLocaleString()}</div>
+  </div>
             </div>
             <h2>Total</h2>
             <br />

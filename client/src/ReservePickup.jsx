@@ -183,7 +183,8 @@ export default function ReservePickup() {
                             <i
                               key={i}
                               className={`bx bx-star ${
-                                i < Math.floor(serviceDetails.averageRating || 0)
+                                i <
+                                Math.floor(serviceDetails.averageRating || 0)
                                   ? "bxs-star"
                                   : ""
                               }`}
@@ -291,32 +292,34 @@ export default function ReservePickup() {
               </div>
               <br />
               <div className="l54">
-          <div>
-            <h3>Checking availability</h3>
-            <p>
-              {arrivalDate && arrivalTime
-                ? "Available"
-                : "Please select date and time"}
-            </p>
-          </div>
-        </div>
+                <div>
+                  <h3>Checking availability</h3>
+                  <p>
+                    {arrivalDate && arrivalTime
+                      ? "Available"
+                      : "Please select date and time"}
+                  </p>
+                </div>
+              </div>
               <br />
               <div>
                 <h2>Your price summary</h2>
                 <br />
                 <div className="l02">
-                <div className="l02_1">
-            <div>Pickup price</div>
-            <div>NGN {serviceDetails?.pickupPrice.toLocaleString()}</div>
-          </div>
-          <div className="l02_1">
-            <div>Commission (10%)</div>
-            <div>NGN {commission.toLocaleString()}</div>
-          </div>
-          <div className="l02_1">
-            <div>VAT (7.5%)</div>
-            <div>NGN {vat.toLocaleString()}</div>
-          </div>
+                  <div className="l02_1">
+                    <div>Pickup price</div>
+                    <div>
+                      NGN {serviceDetails?.pickupPrice.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="l02_1">
+                    <div>Commission (10%)</div>
+                    <div>NGN {commission.toLocaleString()}</div>
+                  </div>
+                  <div className="l02_1">
+                    <div>VAT (7.5%)</div>
+                    <div>NGN {vat.toLocaleString()}</div>
+                  </div>
                 </div>
                 <br />
                 <div>

@@ -545,13 +545,21 @@ const getRentalDetails = async (req, res) => {
     const images = await MediaTag.find({ listing_id: id }).lean();
     
     // Fetch reviews associated with the rental
-    const reviews = await Reviews.find({ listingId: id }).lean();
+    const reviewData = await Reviews.aggregate([
+      { $match: { listingId: rental._id } },
+      {
+        $group: {
+          _id: "$listingId",
+          averageRating: { $avg: { $toDouble: "$rating" } },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
 
-    // Calculate average rating and review count
-    const reviewCount = reviews.length;
-    const averageRating = reviewCount
-      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviewCount
-      : null;
+    const averageRating =
+    reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
+  const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
 
     // Combine rental data with images and reviews
     const rentalWithDetails = {
@@ -661,8 +669,10 @@ const getRentals = async (req, res) => {
           },
         ]);
 
-        const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
-        const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+        const averageRating =
+        reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
+      const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+    
 
         return {
           ...rental,
@@ -741,7 +751,7 @@ const reserveAndBookPickup = async (req, res) => {
       arrivalTime,
       totalPrice,
       paymentReference: reference,
-      status: "confirmed",
+      status: "pending",
     });
 
     await newServiceBooking.save();
@@ -2379,7 +2389,7 @@ const verifyPaymentAndBook = async (req, res) => {
       numRooms,
       totalPrice,
       paymentReference: reference,
-      status: "confirmed",
+      status: "pending",
     });
 
     await newBooking.save();
@@ -2473,7 +2483,7 @@ const verifyPaymentAndBookRental = async (req, res) => {
       dropoffLocation,
       totalPrice,
       paymentReference: reference,
-      status: "confirmed",
+      status: "pending",
     });
 
     await newRentalBooking.save();
@@ -2545,7 +2555,7 @@ const verifyPaymentAndBookCooffice = async (req, res) => {
       checkOutDate,
       totalPrice,
       paymentReference: reference,
-      status: "confirmed",
+      status: "pending",
     });
 
     await newCoofficeBooking.save();
