@@ -537,38 +537,31 @@ const getRentalDetails = async (req, res) => {
 
     // Fetch rental data by ID
     const rental = await CarRental.findById(id).lean();
-
     if (!rental) {
       return res.status(404).json({ error: "Car rental listing not found" });
     }
 
     // Fetch associated images
     const images = await MediaTag.find({ listing_id: id }).lean();
+    
+    // Fetch reviews associated with the rental
+    const reviews = await Reviews.find({ listingId: id }).lean();
 
-    // Aggregate to get the average rating and review count for this rental
-    const reviewData = await Reviews.aggregate([
-      { $match: { listingId: id } },
-      {
-        $group: {
-          _id: "$listingId",
-          averageRating: { $avg: { $toDouble: "$rating" } },
-          reviewCount: { $sum: 1 },
-        },
-      },
-    ]);
+    // Calculate average rating and review count
+    const reviewCount = reviews.length;
+    const averageRating = reviewCount
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviewCount
+      : null;
 
-    const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
-    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
-
-    // Combine rental data with images, ratings, and reviews
+    // Combine rental data with images and reviews
     const rentalWithDetails = {
       ...rental,
       images: images.map((image) => ({
         ...image,
         url: `${image.media_location}`, // Construct image URL
       })),
-      averageRating,
       reviewCount,
+      averageRating,
     };
 
     res.status(200).json(rentalWithDetails);
@@ -577,6 +570,8 @@ const getRentalDetails = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch rental data" });
   }
 };
+
+
 
 
 const getRentals = async (req, res) => {

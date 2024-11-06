@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { UserContext } from "../context/userContext";
 import { toast } from "react-toastify";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export default function ReserveRental() {
   const [searchParams] = useSearchParams();
@@ -40,8 +40,8 @@ export default function ReserveRental() {
     }
 
     // Load Paystack script
-    const script = document.createElement('script');
-    script.src = 'https://js.paystack.co/v2/inline.js';
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v2/inline.js";
     script.async = true;
     document.body.appendChild(script);
 
@@ -56,13 +56,17 @@ export default function ReserveRental() {
       const availableFromDate = new Date(rental.availableF0rom);
       const availableToDate = new Date(rental.availableTo);
 
-      if (selectedDateTime < availableFromDate || selectedDateTime > availableToDate) {
-        toast.error("Selected date and time are not within the available range.");
+      if (
+        selectedDateTime < availableFromDate ||
+        selectedDateTime > availableToDate
+      ) {
+        toast.error(
+          "Selected date and time are not within the available range."
+        );
         return;
       }
 
       let price = parseFloat(rental.rentalPrice) || 0;
-  
 
       // Add insurance and fuel amounts
       price += parseFloat(rental.insurance) + parseFloat(rental.fuel);
@@ -83,17 +87,17 @@ export default function ReserveRental() {
       toast.error("Please create an account or sign in to continue.");
       return;
     }
-  
-    if (user.interface !== 'user') {
+
+    if (user.interface !== "user") {
       toast.error("Please signin as a customer to continue.");
       return;
     }
-  
+
     if (!pickupLocation || !pickupDate || !pickupTime || !dropoffLocation) {
       toast.error("Please fill in all the required fields.");
       return;
     }
-  
+
     if (!rental) {
       toast.error("Rental details are not available. Please try again.");
       return;
@@ -103,15 +107,18 @@ export default function ReserveRental() {
     const availableFromDate = new Date(rental.availableFrom);
     const availableToDate = new Date(rental.availableTo);
 
-    if (selectedDateTime < availableFromDate || selectedDateTime > availableToDate) {
+    if (
+      selectedDateTime < availableFromDate ||
+      selectedDateTime > availableToDate
+    ) {
       toast.error("This listing is not available on the selected date.");
       return;
     }
-  
+
     // Proceed with payment
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
-      key: 'pk_test_aa805fbdf79594d452dd669b02148a98482bae70', // Replace with your public key
+      key: "pk_test_aa805fbdf79594d452dd669b02148a98482bae70", // Replace with your public key
       amount: Math.round(totalPrice * 100), // Amount in kobo, rounded to avoid decimal issues
       email: user.email,
       onSuccess: (transaction) => {
@@ -119,13 +126,13 @@ export default function ReserveRental() {
       },
       onCancel: () => {
         toast.error("Payment cancelled. Please try again.");
-      }
+      },
     });
   };
 
   const verifyPaymentAndBook = async (reference) => {
     try {
-      const response = await axios.post('/verify_payment_rental', {
+      const response = await axios.post("/verify_payment_rental", {
         reference,
         rentalId,
         withDriver: withDriver === "true",
@@ -133,26 +140,33 @@ export default function ReserveRental() {
         pickupDate,
         pickupTime,
         dropoffLocation,
-        totalPrice
+        totalPrice,
       });
 
       if (response.status === 201) {
         toast.success(response.data.message);
-        navigate('/user');
+        navigate("/user");
       } else {
         toast.error("Booking failed. Please try again.");
       }
     } catch (error) {
       console.error("Error verifying payment and creating booking:", error);
-      toast.error(error.response?.data?.error || "An error occurred. Please try again later.");
+      toast.error(
+        error.response?.data?.error ||
+          "An error occurred. Please try again later."
+      );
     }
   };
   return (
     <>
-   <div className="shade_2 df">
+      <div className="shade_2 df">
         <h1>Search for car rentals</h1>
         <p>From budget cars to luxury vehicles and everything in between</p>
-        <img src="/assets/linear_bg.png" className="shade_bg" alt="Background" />
+        <img
+          src="/assets/linear_bg.png"
+          className="shade_bg"
+          alt="Background"
+        />
         <div className="shade_item">
           <img src="/assets/bg (2).png" alt="Shade Item 1" />
         </div>
@@ -171,70 +185,84 @@ export default function ReserveRental() {
         <div className="col_3">
           {rental && (
             <div className="listings_list">
-          <div className="list_node">
-              <div className="list_1">
-                <img
-                  src={rental.images?.[0]?.url ? 
-                       `http://localhost:8000/${rental.images[0].url}` : 
-                       '/assets/bg (3).png'}
-                  alt={rental.carNameModel || 'Car Rental Image'}
-                />
-              </div>
-              <div className="list_2">
-                <div className="l22">
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <h2>{rental.carNameModel}</h2>
-                      <div className="star_holder">
-                        {[...Array(5)].map((_, index) => (
-                          <i className={`bx bx-star ${index < (rental.ratings || 0) ? 'filled' : ''}`} key={index} />
-                        ))}
+              <div className="list_node">
+                <div className="list_1">
+                  <img
+                    src={
+                      rental.images?.[0]?.url
+                        ? `http://localhost:8000/${rental.images[0].url}`
+                        : "/assets/bg (3).png"
+                    }
+                    alt={rental.carNameModel || "Car Rental Image"}
+                  />
+                </div>
+                <div className="list_2">
+                  <div className="l22">
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <h2>{rental.carNameModel}</h2>
+                        <div className="star_holder">
+                          {[...Array(5)].map((_, i) => (
+                            <i
+                              key={i}
+                              className={`bx bx-star ${
+                                i < Math.floor(rental.averageRating || 0)
+                                  ? "bxs-star"
+                                  : ""
+                              }`}
+                            />
+                          ))}
+                        </div>
                       </div>
-                     
+                      <h3 className="small_1" style={{ marginTop: 10 }}>
+                        {rental.driverName}
+                      </h3>
                     </div>
-                    <h3 className="small_1" style={{ marginTop: 10 }}>
-                      {rental.driverName}
-                    </h3>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <div className="n94">
+                        <h3>
+                          {rental.averageRating >= 4.5 ? "Excellent" : "Good"}
+                        </h3>
+                        <h3>
+                          {rental.reviewCount
+                            ? `${rental.reviewCount} reviews`
+                            : "No reviews"}
+                        </h3>
+                      </div>
+                      <div
+                        className="rating_cont"
+                        style={{
+                          marginLeft: 10,
+                          maxWidth: "50px !important",
+                          minWidth: "100px !important",
+                        }}
+                      >
+                        {rental.averageRating || "N/A"}{" "}
+                        <i className="bx bxs-star"></i>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <div className="n94">
-                      <h3>{rental.ratings >= 4.5 ? 'Excellent' : 'Good'}</h3>
-                      <h3>{rental.reviews || 'No reviews'}</h3>
+                  <div className="l33">
+                    <div className="o93">
+                      <h3>{rental.carType}</h3>
+                      <p>{rental.description}</p>
                     </div>
-                    <div
-                      className="rating_cont"
-                      style={{
-                        marginLeft: 10,
-                        maxWidth: "50px !important",
-                        minWidth: "100px !important"
-                      }}
-                    >
-                      {rental.ratings || 'N/A'}
+                    <div>
+                      <div className="o33">
+                        <div>{rental.discount || "0"}% discounted</div>
+                        <div>Pricing</div>
+                      </div>
+                      <div className="amount_main">
+                        <h1>NGN {rental.rentalPrice?.toLocaleString()}</h1>
+                      </div>
+                      <div className="o33">
+                        <div>Includes taxes</div>
+                      </div>
+                      <br />
                     </div>
-                  </div>
-                </div>
-                <div className="l33">
-                  <div className="o93">
-                    <h3>{rental.carType}</h3>
-                    <p>{rental.description}</p>
-                  </div>
-                  <div>
-                    <div className="o33">
-                      <div>{rental.discount || '0'}% discounted</div>
-                      <div>Pricing</div>
-                    </div>
-                    <div className="amount_main">
-                      <h1>NGN {rental.rentalPrice?.toLocaleString()}</h1>
-                    </div>
-                    <div className="o33">
-                      <div>Includes taxes</div>
-                    </div>
-                    <br />
-                   
                   </div>
                 </div>
               </div>
-            </div>
             </div>
           )}
 
@@ -250,7 +278,7 @@ export default function ReserveRental() {
               </div>
             </div>
           </div>
-<br />
+          <br />
           <div className="detail">
             <h2>Confirm booking details</h2>
             <br />
@@ -311,10 +339,14 @@ export default function ReserveRental() {
             <div className="l54">
               <div>
                 <h3>Checking availability</h3>
-                <p className="checking">{rental ? (
-                  new Date(pickupDate) >= new Date(rental.availableFrom) &&
-                  new Date(pickupDate) <= new Date(rental.availableTo) ? "Available" : "Not available for selected dates"
-                ) : "Checking..."}</p>
+                <p className="checking">
+                  {rental
+                    ? new Date(pickupDate) >= new Date(rental.availableFrom) &&
+                      new Date(pickupDate) <= new Date(rental.availableTo)
+                      ? "Available"
+                      : "Not available for selected dates"
+                    : "Checking..."}
+                </p>
               </div>
             </div>
 
@@ -324,7 +356,9 @@ export default function ReserveRental() {
             <div className="l02">
               <div className="l02_1">
                 <div>Original price</div>
-                <div>NGN {((totalPrice + discountAmount) || 0).toLocaleString()}</div>
+                <div>
+                  NGN {(totalPrice + discountAmount || 0).toLocaleString()}
+                </div>
               </div>
               <div className="l02_1">
                 <div>Discount</div>

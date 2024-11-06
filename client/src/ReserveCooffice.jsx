@@ -40,14 +40,14 @@ export default function ReserveCooffice() {
     return () => {
       document.body.removeChild(script);
     };
-  }, [officeId]);
+  }, [officeId, id]);
 
   useEffect(() => {
     if (checkInDate && checkOutDate && officeDetails) {
       const checkIn = new Date(checkInDate);
       const checkOut = new Date(checkOutDate);
       const diffInTime = checkOut.getTime() - checkIn.getTime();
-      const numberOfDays = diffInTime / (1000 * 3600 * 24);
+      const numberOfDays = Math.ceil(diffInTime / (1000 * 3600 * 24)) + 1; // Added +1 to include checkout day
 
       let price;
       if (numberOfDays >= 30) {
@@ -59,7 +59,7 @@ export default function ReserveCooffice() {
         price = officeDetails.price_per_day * numberOfDays;
       }
 
-      // Calculate discount (you may want to adjust this logic based on your requirements)
+      // Calculate discount
       let discount = 0;
       if (numberOfDays >= 30) {
         discount = price * 0.2; // 20% discount for monthly bookings
@@ -72,7 +72,7 @@ export default function ReserveCooffice() {
     }
   }, [checkInDate, checkOutDate, officeDetails]);
 
-  const handlePayment = () => {
+  const handlePayment = (securityLevy) => {
     if (!user) {
       toast.error("Please create an account or sign in to continue.");
       return;
@@ -106,12 +106,18 @@ export default function ReserveCooffice() {
       toast.error("Booking period cannot exceed 1 year.");
       return;
     }
+
+    // Calculate final price including all fees
+    const commission = totalPrice * 0.1;  // 10% commission
+    const vat = totalPrice * 0.075;       // 7.5% VAT
+    const finalSecurityLevy = securityLevy ? Number(securityLevy) : 0;
+    const finalPrice = totalPrice + commission + vat + finalSecurityLevy;
   
     // Proceed with payment
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
-      key: 'pk_test_aa805fbdf79594d452dd669b02148a98482bae70', // Replace with your public key
-      amount: totalPrice * 100, // Amount in kobo
+      key: 'pk_test_aa805fbdf79594d452dd669b02148a98482bae70',
+      amount: finalPrice * 100, // Amount in kobo
       email: user.email,
       onSuccess: (transaction) => {
         verifyPaymentAndBook(transaction.reference);
@@ -296,12 +302,34 @@ export default function ReserveCooffice() {
                 <div>Discount</div>
                 <div>NGN {discountAmount.toLocaleString()}</div>
               </div>
+              <div className="l02_1">
+                <div>VAT (7.5%)</div>
+                <div>NGN {(totalPrice * 0.075).toLocaleString()}</div>
+              </div>
+              <div className="l02_1">
+                <div>Commission (10%)</div>
+                <div>NGN {(totalPrice * 0.1).toLocaleString()}</div>
+              </div>
+              <div className="l02_1">
+                <div>Security Levy</div>
+                <div>NGN {Number(officeDetails?.security_levy || 0).toLocaleString()}</div>
+              </div>
             </div>
             <h2>Total</h2>
             <br />
-            <h2 className="sum">NGN {totalPrice.toLocaleString()}</h2>
+            <h2 className="sum">
+              NGN {(
+                totalPrice +
+                totalPrice * 0.1 + // Commission
+                totalPrice * 0.075 + // VAT
+                Number(officeDetails?.security_levy || 0) // Security Levy
+              ).toLocaleString()}
+            </h2>
             <br />
-            <div className="button b3 b2" onClick={handlePayment}>
+            <div
+              className="button b3 b2"
+              onClick={() => handlePayment(officeDetails.security_levy)}
+            >
               Make payment
             </div>
           </div>

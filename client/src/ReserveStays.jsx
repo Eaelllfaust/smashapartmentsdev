@@ -48,12 +48,14 @@ export default function ReserveStays() {
     if (checkInDate && checkOutDate && stayDetails) {
       const checkIn = new Date(checkInDate);
       const checkOut = new Date(checkOutDate);
+      
+      // Add one day to include the checkout date
       const diffInTime = checkOut.getTime() - checkIn.getTime();
-      const numberOfDays = diffInTime / (1000 * 3600 * 24);
+      const numberOfDays = Math.ceil(diffInTime / (1000 * 3600 * 24)) + 1;
 
       let price = stayDetails.price_per_night * numberOfDays;
-
       let discount = 0;
+
       if (numberOfDays >= 30 && stayDetails.monthly_discount > 0) {
         discount = (price * stayDetails.monthly_discount) / 100;
       } else if (numberOfDays >= 7 && stayDetails.weekly_discount > 0) {
@@ -65,14 +67,16 @@ export default function ReserveStays() {
     }
   }, [checkInDate, checkOutDate, stayDetails]);
 
-  const handlePayment = () => {
+  // Rest of the component remains the same...
+
+  const handlePayment = (securityLevy) => {
     if (!user) {
       toast.error("Please create an account or sign in to continue.");
       return;
     }
 
     if (user.interface !== "user") {
-      toast.error("Please signin as a customer to continue.");
+      toast.error("Please sign in as a customer to continue.");
       return;
     }
 
@@ -105,11 +109,21 @@ export default function ReserveStays() {
       return;
     }
 
+    // Calculate final price
+    const commission = totalPrice * 0.1;
+    const vat = totalPrice * 0.075;
+    const finalSecurityLevy = securityLevy ? Number(securityLevy) : 0;
+    const finalPrice =
+      totalPrice +
+      commission +
+      vat +
+      (finalSecurityLevy > 0 ? finalSecurityLevy : 0);
+
     // Proceed with payment
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
       key: "pk_test_aa805fbdf79594d452dd669b02148a98482bae70", // Replace with your public key
-      amount: totalPrice * 100, // Amount in kobo
+      amount: finalPrice * 100, // Amount in kobo
       email: user.email,
       onSuccess: (transaction) => {
         verifyPaymentAndBook(transaction.reference);
@@ -202,7 +216,14 @@ export default function ReserveStays() {
                         <h2>{stayDetails.property_name}</h2>
                         <div className="star_holder">
                           {[...Array(5)].map((_, i) => (
-                            <i key={i} className={`bx bx-star ${i < Math.floor(stayDetails.averageRating || 0) ? 'bxs-star' : ''}`} />
+                            <i
+                              key={i}
+                              className={`bx bx-star ${
+                                i < Math.floor(stayDetails.averageRating || 0)
+                                  ? "bxs-star"
+                                  : ""
+                              }`}
+                            />
                           ))}
                         </div>
                       </div>
@@ -211,27 +232,30 @@ export default function ReserveStays() {
                       </h3>
                     </div>
                     <div style={{ display: "flex", alignItems: "center" }}>
-                    <div className="n94">
-                      <h3>
-                        {stayDetails.averageRating >= 4.5 ? "Excellent" : "Good"}
-                      </h3>
-                      <h3>
-                        {stayDetails.reviewCount
-                          ? `${stayDetails.reviewCount} reviews`
-                          : "No reviews"}
-                      </h3>
+                      <div className="n94">
+                        <h3>
+                          {stayDetails.averageRating >= 4.5
+                            ? "Excellent"
+                            : "Good"}
+                        </h3>
+                        <h3>
+                          {stayDetails.reviewCount
+                            ? `${stayDetails.reviewCount} reviews`
+                            : "No reviews"}
+                        </h3>
+                      </div>
+                      <div
+                        className="rating_cont"
+                        style={{
+                          marginLeft: 10,
+                          maxWidth: "50px !important",
+                          minWidth: "100px !important",
+                        }}
+                      >
+                        {stayDetails.averageRating || "N/A"}{" "}
+                        <i className="bx bxs-star"></i>
+                      </div>
                     </div>
-                    <div
-                      className="rating_cont"
-                      style={{
-                        marginLeft: 10,
-                        maxWidth: "50px !important",
-                        minWidth: "100px !important",
-                      }}
-                    >
-                      {stayDetails.averageRating || "N/A"} <i className="bx bxs-star"></i>
-                    </div>
-                  </div>
                   </div>
                   <div className="l33">
                     <div className="o93">
@@ -354,14 +378,40 @@ export default function ReserveStays() {
               </div>
               <div className="l02_1">
                 <div>Discount</div>
-                <div>NGN&nbsp;{discountAmount.toLocaleString() || "0.00"}</div>
+                <div>NGN {discountAmount.toLocaleString() || "0.00"}</div>
               </div>
             </div>
+            <div className="l02_1">
+                <div>VAT (7.5%)</div>
+                <div>NGN {(totalPrice * 0.075).toLocaleString()}</div>
+              </div>
+              <div className="l02_1">
+                <div>Commission (10%)</div>
+                <div>NGN {(totalPrice * 0.1).toLocaleString()}</div>
+              </div>
+              <div className="l02_1">
+                <div>Security Levy</div>
+                <div>NGN {Number(stayDetails?.security_levy || 0).toLocaleString()}</div>
+              </div>
+
+            <br />
             <h2>Total</h2>
             <br />
-            <h2 className="sum">NGN&nbsp;{totalPrice.toLocaleString()}</h2>
+            <h2 className="sum">
+              NGN&nbsp;
+              {(
+                totalPrice +
+                totalPrice * 0.1 + // Commission
+                totalPrice * 0.075 + // VAT
+                Number(stayDetails?.security_levy || 0)
+              ) // Security Levy
+                .toLocaleString()}
+            </h2>
             <br />
-            <div className="button b3 b2" onClick={handlePayment}>
+            <div
+              className="button b3 b2"
+              onClick={() => handlePayment(stayDetails.security_levy)}
+            >
               Make payment
             </div>
           </div>
