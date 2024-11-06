@@ -749,21 +749,39 @@ const getPickupData = async (req, res) => {
     // Fetch associated images
     const images = await MediaTag.find({ listing_id: id }).lean();
 
-    // Combine service data with images and construct image URLs
-    const serviceWithImages = {
+    // Aggregate to get the average rating and review count for the service
+    const reviewData = await Reviews.aggregate([
+      { $match: { listingId: service._id } },
+      {
+        $group: {
+          _id: "$listing_id",
+          averageRating: { $avg: { $toDouble: "$rating" } },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
+    // Combine service data with images, rating, and review count
+    const serviceWithDetails = {
       ...service,
       images: images.map((image) => ({
         ...image,
         url: `${image.media_location}`, // Construct image URL
       })),
+      averageRating,
+      reviewCount,
     };
 
-    res.status(200).json(serviceWithImages);
+    res.status(200).json(serviceWithDetails);
   } catch (error) {
     console.error("Error fetching pickup service data:", error);
     res.status(500).json({ error: "Failed to fetch pickup service data" });
   }
 };
+
 
 const getPickups = async (req, res) => {
   try {
@@ -776,6 +794,7 @@ const getPickups = async (req, res) => {
       maxPrice,
       availableFrom,
       availableTo,
+      ratings, // Added for rating filter
       limit,
       offset,
     } = req.query;
@@ -797,8 +816,7 @@ const getPickups = async (req, res) => {
 
     // Add filters for extra luggage and waiting time
     if (extraLuggage) filters.extraLuggage = extraLuggage === "true";
-    if (waitingTime)
-      filters.waitingTime = { $regex: new RegExp(waitingTime, "i") };
+    if (waitingTime) filters.waitingTime = { $regex: new RegExp(waitingTime, "i") };
 
     // Add filters for price (using pickupPrice)
     if (minPrice) filters.pickupPrice = { $gte: Number(minPrice) };
@@ -808,8 +826,7 @@ const getPickups = async (req, res) => {
     }
 
     // Add filters for availability
-    if (availableFrom)
-      filters.availableFrom = { $lte: new Date(availableFrom) };
+    if (availableFrom) filters.availableFrom = { $lte: new Date(availableFrom) };
     if (availableTo) filters.availableTo = { $gte: new Date(availableTo) };
 
     let pickups = await Service.find(filters)
@@ -824,19 +841,42 @@ const getPickups = async (req, res) => {
         .lean();
     }
 
-    const pickupsWithImages = await Promise.all(
+    // Calculate average rating and count of reviews for each pickup and add images
+    const pickupsWithDetails = await Promise.all(
       pickups.map(async (pickup) => {
         const images = await MediaTag.find({ listing_id: pickup._id }).lean();
-        return { ...pickup, images };
+
+        // Aggregate to get the average rating and review count for the pickup
+        const reviewData = await Reviews.aggregate([
+          { $match: { listingId: pickup._id } },
+          {
+            $group: {
+              _id: "$listing_id",
+              averageRating: { $avg: { $toDouble: "$rating" } },
+              reviewCount: { $sum: 1 },
+            },
+          },
+        ]);
+
+        const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+        const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
+        return { ...pickup, images, averageRating, reviewCount };
       })
     );
 
-    res.status(200).json(pickupsWithImages);
+    // Filter pickups to include only those with the specified average rating
+    const filteredPickups = pickupsWithDetails.filter(
+      (pickup) => !ratings || pickup.averageRating === Number(ratings)
+    );
+
+    res.status(200).json(filteredPickups);
   } catch (error) {
     console.error("Error fetching pickups:", error);
     res.status(500).json({ error: "Failed to fetch pickups" });
   }
 };
+
 const getCurrentPickups = async (req, res) => {
   try {
     const { userId } = req.params;

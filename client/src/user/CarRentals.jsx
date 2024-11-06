@@ -11,17 +11,19 @@ export default function CarRentals() {
   
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [selectedListingId, setSelectedListingId] = useState(null);
 
-  const openReviewModal = (bookingId) => {
+  const openReviewModal = (bookingId, listingId) => {
     setSelectedBookingId(bookingId);
+    setSelectedListingId(listingId);
     setShowReviewModal(true);
   };
 
   const closeReviewModal = () => {
     setShowReviewModal(false);
     setSelectedBookingId(null);
+    setSelectedListingId(null);
   };
-
   const { user, loading } = useContext(UserContext);
   const navigate = useNavigate();
   const [rentals, setRentals] = useState([]);
@@ -209,7 +211,7 @@ export default function CarRentals() {
                   <div className="action">
                         <div
                           className="new_btn_2"
-                          onClick={() => openReviewModal(rental._id)}
+                          onClick={() => openReviewModal(rental._id, rental.rentalId)}
                         >
                           Review and rate
                         </div>
@@ -277,6 +279,7 @@ export default function CarRentals() {
               <ReviewModal
                 userId={user._id}
                 bookingId={selectedBookingId}
+                listingId={selectedListingId}
                 onClose={closeReviewModal}
               />
             )}

@@ -215,6 +215,14 @@ export default function Pickups() {
       alert("Please enter an airport to show on the map.");
     }
   };
+  const handleRatingChange = (e, rating) => {
+    setFilters((prevFilters) => {
+      const updatedRatings = e.target.checked
+        ? [...(prevFilters.ratings || []), rating]  // Add rating
+        : prevFilters.ratings.filter((r) => r !== rating);  // Remove rating
+      return { ...prevFilters, ratings: updatedRatings };
+    });
+  };
   const handleAirportInputChange = (e) => {
     const value = e.target.value;
     setAirportQuery(value);
@@ -385,6 +393,28 @@ export default function Pickups() {
                 />
                 <label htmlFor="waitingTime">Waiting Time</label>
               </div>
+            </form>
+            <br />
+            <br />
+            <form action="" className="ti">
+              <label htmlFor="">Ratings</label>
+              <br />
+              <br />
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <div className="flex_item" key={rating}>
+                  <input
+                    className="check"
+                    type="checkbox"
+                    name="ratings"
+                    value={rating}
+                    checked={filters.ratings?.includes(rating)}
+                    onChange={(e) => handleRatingChange(e, rating)}
+                  />
+                  <label htmlFor="ratings">
+                    {rating} star{rating > 1 ? "s" : ""}
+                  </label>
+                </div>
+              ))}
             </form>
           </div>
         </div>

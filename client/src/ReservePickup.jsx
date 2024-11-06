@@ -29,7 +29,6 @@ export default function ReservePickup() {
 
     fetchServiceDetails();
 
-    // Load Paystack script
     const script = document.createElement("script");
     script.src = "https://js.paystack.co/v2/inline.js";
     script.async = true;
@@ -156,22 +155,53 @@ export default function ReservePickup() {
                     )}
                 </div>
                 <div className="list_2">
-                <div className="l22">
-                  <div>
+                  <div className="l22">
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <h2>{serviceDetails.serviceName}</h2>
+                        <div className="star_holder">
+                          {[...Array(5)].map((_, i) => (
+                            <i
+                              key={i}
+                              className={`bx bx-star ${
+                                i < Math.floor(serviceDetails.averageRating || 0)
+                                  ? "bxs-star"
+                                  : ""
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <h3 className="small_1" style={{ marginTop: 10 }}>
+                        {serviceDetails.contactName}
+                      </h3>
+                    </div>
                     <div style={{ display: "flex", alignItems: "center" }}>
-                      <h2>{serviceDetails.serviceName}</h2>
+                      <div className="n94">
+                        <h3>
+                          {serviceDetails.averageRating >= 4.5
+                            ? "Excellent"
+                            : "Good"}
+                        </h3>
+                        <h3>
+                          {serviceDetails.reviewCount
+                            ? `${serviceDetails.reviewCount} reviews`
+                            : "No reviews"}
+                        </h3>
+                      </div>
+                      <div
+                        className="rating_cont"
+                        style={{
+                          marginLeft: 10,
+                          maxWidth: "50px !important",
+                          minWidth: "100px !important",
+                        }}
+                      >
+                        {serviceDetails.averageRating || "N/A"}{" "}
+                        <i className="bx bxs-star"></i>
+                      </div>
                     </div>
-                    <h3 className="small_1" style={{ marginTop: 10 }}>
-                      {serviceDetails.contactName}
-                    </h3>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <div className="n94">
-                      <h3>{serviceDetails.carMakeModel}</h3>
-                      <h3>{serviceDetails.carColor}</h3>
-                    </div>
-                  </div>
-                </div>
                   <div className="l33">
                     <div className="o93">
                       <h3>Airport Pickup</h3>
@@ -188,12 +218,11 @@ export default function ReservePickup() {
                         </h1>
                       </div>
                       <div className="o33">
-                      <div>
-                        {serviceDetails.extraLuggage
-                          ? "Extra luggage allowed"
-                          : "Standard luggage"}
-                      </div>
-               
+                        <div>
+                          {serviceDetails.extraLuggage
+                            ? "Extra luggage allowed"
+                            : "Standard luggage"}
+                        </div>
                       </div>
                     </div>
                   </div>
