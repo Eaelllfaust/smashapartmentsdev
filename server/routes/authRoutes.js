@@ -92,6 +92,8 @@ const {
   updateRental,
   getOfficeListing,
   updateOffice,
+  Review,
+  getReview,
 } = require("../controllers/authController");
 
 router.use(
@@ -144,6 +146,7 @@ router.get("/listings/inactive/:userId", getAllInactiveListings);
 router.get("/listings/inactivegeneral", getAllInactiveListingsGeneral);
 router.post("/likeproperty", likeProperty);
 router.post("/updatestatus", updateStatus);
+router.post("/submit-review", Review);
 router.post("/cancelbooking/:bookingId", cancelBooking);
 router.post("/cancelofficespace/:bookingId", cancelOfficeSpace );
 router.post("/cancelrental/:rentalId", cancelRental);
@@ -154,6 +157,7 @@ router.post("/verify_payment_rental", verifyPaymentAndBookRental);
 router.post("/verify_payment_service", reserveAndBookPickup);
 router.get("/getlistingdata/:id", getListingData);
 router.get("/getrentaldetails/:id", getRentalDetails);
+router.get("/reviews/:userId/:bookingId/:listingId", getReview);
 router.get("/getpickupdata/:id", getPickupData);
 router.get("/activelistings/:userId", getallActiveListings);
 router.get("/activelistingsgeneral", getallActiveListingsGeneral);

@@ -22,8 +22,9 @@ const Newsletter = require("../models/newsletter");
 const axios = require("axios");
 const PartnerEarning = require("../models/partnerearning");
 const UserComplaint = require("../models/usercomplaint");
-const Adminactions = require("../models/adminactions"); 
+const Adminactions = require("../models/adminactions");
 const Payout = require("../models/payout");
+const Reviews = require("../models/reviews");
 const crypto = require("crypto");
 const Nodemailer = require("nodemailer");
 const { MailtrapTransport } = require("mailtrap");
@@ -106,11 +107,13 @@ const payoutDetails = async (req, res) => {
   try {
     const payout = await Payout.findOne({ userId: req.params.userId });
     if (!payout) {
-      return res.status(404).json({ message: 'Payout details not found' });
+      return res.status(404).json({ message: "Payout details not found" });
     }
     res.json(payout);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching payout details', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching payout details", error: error.message });
   }
 };
 const updatePayoutSettings = async (req, res) => {
@@ -280,7 +283,7 @@ const getCurrentOfficeSpaces = async (req, res) => {
 
           // Fetch receipts associated with the booking
           const receipts = await Receipts.find({
-            booking_id: booking._id
+            booking_id: booking._id,
           }).lean();
 
           // Return booking with office details, media tags, and receipts
@@ -308,12 +311,10 @@ const getCurrentOfficeSpaces = async (req, res) => {
   }
 };
 
-
 const cancelService = async (req, res) => {
-  const { bookingId } = req.params; 
+  const { bookingId } = req.params;
 
   try {
-
     const booking = await ServiceBooking.findByIdAndUpdate(
       bookingId,
       { status: "cancelled" },
@@ -328,7 +329,6 @@ const cancelService = async (req, res) => {
       .status(200)
       .json({ message: "Booking cancelled successfully", booking });
   } catch (error) {
-
     console.error("Error cancelling booking:", error);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -338,7 +338,6 @@ const cancelRental = async (req, res) => {
   const { rentalId } = req.params;
 
   try {
-
     const rental = await Rental.findByIdAndUpdate(
       rentalId,
       { status: "cancelled" },
@@ -351,10 +350,8 @@ const cancelRental = async (req, res) => {
 
     res.status(200).json({ message: "Rental cancelled successfully", rental });
   } catch (error) {
- 
     console.error("Error cancelling rental:", error);
     res.status(500).json({ message: "Internal server error" });
-
   }
 };
 const sendRefundPendingEmail = async (email) => {
@@ -396,7 +393,7 @@ const sendRefundPendingEmail = async (email) => {
     text: "We have received your refund appeal. Your request is currently pending approval, and if approved, you will receive a 50% refund.",
     html: htmlTemplate,
     category: "Refund Appeal",
-    sandbox: true
+    sandbox: true,
   };
 
   try {
@@ -412,7 +409,6 @@ const cancelBooking = async (req, res) => {
   const { bookingId } = req.params;
 
   try {
-
     const booking = await Booking.findById(bookingId);
 
     if (!booking) {
@@ -425,25 +421,24 @@ const cancelBooking = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-   await sendRefundPendingEmail(user.email);
+    await sendRefundPendingEmail(user.email);
 
+    await Adminactions.create({
+      userId: booking.userId,
+      dataId: booking._id,
+      message: "A new refund appeal has been made",
+      type: "refund_appeal",
+      status: "pending",
+    });
 
-   await Adminactions.create({
-    userId: booking.userId,  
-    dataId: booking._id,
-    message: "A new refund appeal has been made",
-    type: "refund_appeal",
-    status: "pending"
-  });
-
-    res.status(200).json({ message: "Booking cancelled and refund pending email sent" });
+    res
+      .status(200)
+      .json({ message: "Booking cancelled and refund pending email sent" });
   } catch (error) {
     console.error("Error in cancelBooking:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-
 
 const getUserPreferences = async (req, res) => {
   try {
@@ -823,7 +818,6 @@ const getPickups = async (req, res) => {
       .lean();
 
     if (pickups.length === 0) {
-
       pickups = await Service.find()
         .skip(Number(offset) || 0)
         .limit(Number(limit) || 10)
@@ -854,7 +848,9 @@ const getCurrentPickups = async (req, res) => {
     }).lean();
 
     if (!pickups.length) {
-      return res.status(404).json({ error: "No airport pickups found for this user" });
+      return res
+        .status(404)
+        .json({ error: "No airport pickups found for this user" });
     }
 
     // Fetch associated service details, media, and receipts for each pickup
@@ -862,14 +858,18 @@ const getCurrentPickups = async (req, res) => {
       pickups.map(async (pickup) => {
         try {
           // Fetch service details
-          const serviceDetails = await Service.findById(pickup.serviceId).lean();
-          
+          const serviceDetails = await Service.findById(
+            pickup.serviceId
+          ).lean();
+
           // Fetch associated media
-          const media = await MediaTag.find({ listing_id: pickup.serviceId }).lean();
+          const media = await MediaTag.find({
+            listing_id: pickup.serviceId,
+          }).lean();
 
           // Fetch receipts based on pickup's booking ID
           const receipts = await Receipts.find({
-            booking_id: pickup._id
+            booking_id: pickup._id,
           }).lean();
 
           // Return pickup with service details, media, and receipts
@@ -878,18 +878,22 @@ const getCurrentPickups = async (req, res) => {
             serviceDetails,
             media, // Include media in the response
             receipts, // Include receipts in the response
-            driverPhoneNumber: serviceDetails?.driverPhoneNumber || "Not provided",
+            driverPhoneNumber:
+              serviceDetails?.driverPhoneNumber || "Not provided",
             driverEmail: serviceDetails?.driverEmail || "Not provided",
             carMakeModel: serviceDetails?.carMakeModel || "Unknown",
             carColor: serviceDetails?.carColor || "Unknown",
           };
         } catch (err) {
-          console.error(`Error fetching details for pickup ${pickup._id}:`, err);
+          console.error(
+            `Error fetching details for pickup ${pickup._id}:`,
+            err
+          );
           return pickup; // Return pickup with default values if there's an error
         }
       })
     );
-    
+
     res.status(200).json(pickupsWithDetails);
   } catch (error) {
     console.error("Error fetching user pickups:", error);
@@ -897,13 +901,12 @@ const getCurrentPickups = async (req, res) => {
   }
 };
 
-
 const getCoOfficeData = async (req, res) => {
   try {
     const { id } = req.params; // Get cooffice ID from request parameters
+    
     // Fetch cooffice data by ID
     const cooffice = await OfficeSpace.findById(id).lean();
-
     if (!cooffice) {
       return res.status(404).json({ error: "CoOffice listing not found" });
     }
@@ -911,21 +914,40 @@ const getCoOfficeData = async (req, res) => {
     // Fetch associated images
     const images = await MediaTag.find({ listing_id: id }).lean();
 
-    // Combine cooffice data with images and construct image URLs
-    const coofficeWithImages = {
+    // Fetch review data: calculate average rating and review count for the cooffice
+    const reviewData = await Reviews.aggregate([
+      { $match: { listingId: cooffice._id } }, // Match reviews for the specific cooffice
+      {
+        $group: {
+          _id: "$listing_id",
+          averageRating: { $avg: { $toDouble: "$rating" } }, // Calculate average rating
+          reviewCount: { $sum: 1 } // Count the number of reviews
+        },
+      },
+    ]);
+
+    // Assign average rating and review count, or set defaults if no reviews
+    const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
+    // Combine cooffice data with images, review stats, and construct image URLs
+    const coofficeWithDetails = {
       ...cooffice,
       images: images.map((image) => ({
         ...image,
         url: `${image.media_location}`, // Construct image URL
       })),
+      averageRating,
+      reviewCount,
     };
 
-    res.status(200).json(coofficeWithImages);
+    res.status(200).json(coofficeWithDetails);
   } catch (error) {
     console.error("Error fetching cooffice data:", error);
     res.status(500).json({ error: "Failed to fetch cooffice data" });
   }
 };
+
 
 const getCurrentRentals = async (req, res) => {
   try {
@@ -954,7 +976,9 @@ const getCurrentRentals = async (req, res) => {
           }).lean();
 
           // Fetch uploaded receipts for this rental
-          const receipts = await Receipts.find({ booking_id: rental._id }).lean();
+          const receipts = await Receipts.find({
+            booking_id: rental._id,
+          }).lean();
 
           // Return rental with car rental details, media, and receipts
           return {
@@ -990,8 +1014,7 @@ const getCurrentBookings = async (req, res) => {
     const bookings = await Booking.find({
       userId,
       status: { $in: ["confirmed", "reserved", "cancelled", "ended"] },
-    })
-    .lean();
+    }).lean();
 
     if (!bookings.length) {
       return res.status(404).json({ error: "No bookings found for this user" });
@@ -1004,10 +1027,12 @@ const getCurrentBookings = async (req, res) => {
             listing_id: booking.listingId,
           }).lean();
 
-          const stayListing = await StayListing.findById(booking.listingId).lean();
+          const stayListing = await StayListing.findById(
+            booking.listingId
+          ).lean();
 
           const receipts = await Receipts.find({
-            booking_id: booking._id
+            booking_id: booking._id,
           }).lean();
 
           return {
@@ -1021,8 +1046,11 @@ const getCurrentBookings = async (req, res) => {
             contact_email: stayListing?.contact_email || "Not provided",
           };
         } catch (err) {
-          console.error(`Error fetching details for booking ${booking._id}:`, err);
-          return booking; 
+          console.error(
+            `Error fetching details for booking ${booking._id}:`,
+            err
+          );
+          return booking;
         }
       })
     );
@@ -1034,12 +1062,10 @@ const getCurrentBookings = async (req, res) => {
   }
 };
 
-
 const getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
 
-   
     const [
       totalBookingCount,
       totalCoofficeCount,
@@ -1094,18 +1120,23 @@ const getUsers = async (req, res) => {
   }
 };
 
-async function aggregateRevenueFromSchema(schema, schemaName, dateField = 'createdAt', priceField = 'totalPrice') {
+async function aggregateRevenueFromSchema(
+  schema,
+  schemaName,
+  dateField = "createdAt",
+  priceField = "totalPrice"
+) {
   try {
     return await schema.aggregate([
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: `$${dateField}` }
+            $dateToString: { format: "%Y-%m-%d", date: `$${dateField}` },
           },
-          totalRevenue: { $sum: `$${priceField}` } // Sum up the revenue using the correct price field
-        }
+          totalRevenue: { $sum: `$${priceField}` }, // Sum up the revenue using the correct price field
+        },
       },
-      { $sort: { _id: 1 } }
+      { $sort: { _id: 1 } },
     ]);
   } catch (error) {
     console.error(`Error aggregating revenue from ${schemaName}:`, error);
@@ -1113,30 +1144,41 @@ async function aggregateRevenueFromSchema(schema, schemaName, dateField = 'creat
   }
 }
 
-
 const revenue = async (req, res) => {
   try {
     const revenueData = await Promise.all([
-      aggregateRevenueFromSchema(ServiceBooking, 'ServiceBooking', 'createdAt', 'totalPrice'),
-      aggregateRevenueFromSchema(Rental, 'Rental', 'createdAt', 'rentalPrice'),
-      aggregateRevenueFromSchema(CoofficeBooking, 'CoofficeBooking', 'createdAt', 'totalPrice'),
-      aggregateRevenueFromSchema(Booking, 'Booking', 'createdAt', 'totalPrice') // Use createdAt for bookings
+      aggregateRevenueFromSchema(
+        ServiceBooking,
+        "ServiceBooking",
+        "createdAt",
+        "totalPrice"
+      ),
+      aggregateRevenueFromSchema(Rental, "Rental", "createdAt", "rentalPrice"),
+      aggregateRevenueFromSchema(
+        CoofficeBooking,
+        "CoofficeBooking",
+        "createdAt",
+        "totalPrice"
+      ),
+      aggregateRevenueFromSchema(Booking, "Booking", "createdAt", "totalPrice"), // Use createdAt for bookings
     ]);
 
     // Combine all the revenue data
     const combinedData = revenueData.flat();
 
-    const dates = combinedData.map(item => item._id);
-    const amounts = combinedData.map(item => item.totalRevenue);
+    const dates = combinedData.map((item) => item._id);
+    const amounts = combinedData.map((item) => item.totalRevenue);
 
     res.json({
       dates,
       amounts,
-      total: amounts.reduce((acc, curr) => acc + curr, 0)
+      total: amounts.reduce((acc, curr) => acc + curr, 0),
     });
   } catch (error) {
-    console.error('Error fetching revenue data:', error);
-    res.status(500).json({ message: 'Error fetching revenue data', error: error.message });
+    console.error("Error fetching revenue data:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching revenue data", error: error.message });
   }
 };
 
@@ -1182,12 +1224,12 @@ async function aggregateBookingsFromSchema(schema) {
     {
       $group: {
         _id: {
-          $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } // Use createdAt
+          $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }, // Use createdAt
         },
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
-    { $sort: { _id: 1 } }
+    { $sort: { _id: 1 } },
   ]);
 }
 const bookingsOverTime = async (req, res) => {
@@ -1196,17 +1238,19 @@ const bookingsOverTime = async (req, res) => {
       aggregateBookingsFromSchema(ServiceBooking),
       aggregateBookingsFromSchema(Rental),
       aggregateBookingsFromSchema(CoofficeBooking),
-      aggregateBookingsFromSchema(Booking)
+      aggregateBookingsFromSchema(Booking),
     ]);
 
     const combinedData = bookingsData.flat();
 
-    const dates = combinedData.map(item => item._id);
-    const counts = combinedData.map(item => item.count);
+    const dates = combinedData.map((item) => item._id);
+    const counts = combinedData.map((item) => item.count);
 
     res.json({ dates, counts });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching bookings over time data', error });
+    res
+      .status(500)
+      .json({ message: "Error fetching bookings over time data", error });
   }
 };
 
@@ -1214,15 +1258,15 @@ async function aggregateRevenueByListingFromSchema(schema) {
   return await schema.aggregate([
     {
       $match: {
-        listingId: { $exists: true, $ne: null } // Ensure listingId is present
-      }
+        listingId: { $exists: true, $ne: null }, // Ensure listingId is present
+      },
     },
     {
       $group: {
         _id: "$listingId", // Group by listingId
-        totalRevenue: { $sum: "$totalPrice" } // Sum the totalPrice
-      }
-    }
+        totalRevenue: { $sum: "$totalPrice" }, // Sum the totalPrice
+      },
+    },
   ]);
 }
 
@@ -1232,27 +1276,31 @@ const revenueByListing = async (req, res) => {
       aggregateRevenueByListingFromSchema(ServiceBooking),
       aggregateRevenueByListingFromSchema(Rental),
       aggregateRevenueByListingFromSchema(CoofficeBooking),
-      aggregateRevenueByListingFromSchema(Booking)
+      aggregateRevenueByListingFromSchema(Booking),
     ]);
 
     // Combine all the revenue by listing data
     const combinedData = revenueByListingData.flat();
 
     // If listingId is an ObjectId, convert it to a string for labels
-    const labels = combinedData.map(item => item._id ? item._id.toString() : "Unknown Listing"); // Fallback for missing listingId
-    const revenues = combinedData.map(item => item.totalRevenue);
+    const labels = combinedData.map((item) =>
+      item._id ? item._id.toString() : "Unknown Listing"
+    ); // Fallback for missing listingId
+    const revenues = combinedData.map((item) => item.totalRevenue);
 
     res.json({ labels, revenues });
   } catch (error) {
     console.error(error); // Log the error for debugging
-    res.status(500).json({ message: 'Error fetching revenue by listing type data', error });
+    res
+      .status(500)
+      .json({ message: "Error fetching revenue by listing type data", error });
   }
 };
-const userAnalytics =  async (req, res) => {
+const userAnalytics = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ status: 'active' });
-    const inactiveUsers = await User.countDocuments({ status: 'inactive' });
+    const activeUsers = await User.countDocuments({ status: "active" });
+    const inactiveUsers = await User.countDocuments({ status: "inactive" });
 
     res.json({
       totalUsers,
@@ -1273,18 +1321,18 @@ const bookingData = async (req, res) => {
       return await Model.aggregate([
         {
           $match: {
-            createdAt: { $gte: startDate, $lte: endDate }
-          }
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
         },
         {
           $group: {
             _id: { $month: "$createdAt" },
-            count: { $sum: 1 }
-          }
+            count: { $sum: 1 },
+          },
         },
         {
-          $sort: { "_id": 1 }
-        }
+          $sort: { _id: 1 },
+        },
       ]);
     };
 
@@ -1293,74 +1341,93 @@ const bookingData = async (req, res) => {
         {
           $group: {
             _id: "$status",
-            count: { $sum: 1 }
-          }
-        }
+            count: { $sum: 1 },
+          },
+        },
       ]);
     };
 
-    const [staysBookings, coofficeBookings, rentalBookings, serviceBookings] = await Promise.all([
-      aggregateBookings(Booking),
-      aggregateBookings(CoofficeBooking),
-      aggregateBookings(Rental),
-      aggregateBookings(ServiceBooking)
-    ]);
+    const [staysBookings, coofficeBookings, rentalBookings, serviceBookings] =
+      await Promise.all([
+        aggregateBookings(Booking),
+        aggregateBookings(CoofficeBooking),
+        aggregateBookings(Rental),
+        aggregateBookings(ServiceBooking),
+      ]);
 
-    const [staysStatuses, coofficeStatuses, rentalStatuses, serviceStatuses] = await Promise.all([
-      countStatuses(Booking),
-      countStatuses(CoofficeBooking),
-      countStatuses(Rental),
-      countStatuses(ServiceBooking)
-    ]);
+    const [staysStatuses, coofficeStatuses, rentalStatuses, serviceStatuses] =
+      await Promise.all([
+        countStatuses(Booking),
+        countStatuses(CoofficeBooking),
+        countStatuses(Rental),
+        countStatuses(ServiceBooking),
+      ]);
 
     const monthlyData = Array(12).fill(0);
-    [staysBookings, coofficeBookings, rentalBookings, serviceBookings].forEach(bookings => {
-      bookings.forEach(booking => {
-        monthlyData[booking._id - 1] += booking.count;
-      });
-    });
+    [staysBookings, coofficeBookings, rentalBookings, serviceBookings].forEach(
+      (bookings) => {
+        bookings.forEach((booking) => {
+          monthlyData[booking._id - 1] += booking.count;
+        });
+      }
+    );
 
     const statusCounts = {
       pending: 0,
       confirmed: 0,
       reserved: 0,
       cancelled: 0,
-      ended: 0
+      ended: 0,
     };
 
-    [staysStatuses, coofficeStatuses, rentalStatuses, serviceStatuses].forEach(statuses => {
-      statuses.forEach(status => {
-        if (statusCounts.hasOwnProperty(status._id)) {
-          statusCounts[status._id] += status.count;
-        }
-      });
-    });
+    [staysStatuses, coofficeStatuses, rentalStatuses, serviceStatuses].forEach(
+      (statuses) => {
+        statuses.forEach((status) => {
+          if (statusCounts.hasOwnProperty(status._id)) {
+            statusCounts[status._id] += status.count;
+          }
+        });
+      }
+    );
 
     res.json({
-      months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      months: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
       counts: monthlyData,
-      statusCounts
+      statusCounts,
     });
   } catch (error) {
-    console.error('Error fetching booking data:', error);
-    res.status(500).json({ message: 'Error fetching booking data' });
+    console.error("Error fetching booking data:", error);
+    res.status(500).json({ message: "Error fetching booking data" });
   }
-}
-const usersJoiningOverTime =  async (req, res) => {
+};
+const usersJoiningOverTime = async (req, res) => {
   try {
     const usersOverTime = await User.aggregate([
       {
         $group: {
-          _id: { 
-            year: { $year: "$date_joined" }, 
-            month: { $month: "$date_joined" } 
+          _id: {
+            year: { $year: "$date_joined" },
+            month: { $month: "$date_joined" },
           },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       {
-        $sort: { "_id.year": 1, "_id.month": 1 } // Sorting by year and month
-      }
+        $sort: { "_id.year": 1, "_id.month": 1 }, // Sorting by year and month
+      },
     ]);
 
     res.status(200).json(usersOverTime);
@@ -1369,8 +1436,6 @@ const usersJoiningOverTime =  async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
-
-
 
 const updateUserStatus = async (req, res) => {
   const { userId, status } = req.body;
@@ -1690,40 +1755,40 @@ const getAllBookingsGeneral = async (req, res) => {
 
     // Collect all owner IDs
     const ownerIds = [
-      ...stayListings.map(listing => listing.owner),
-      ...officeSpaces.map(listing => listing.owner),
-      ...carRentals.map(listing => listing.owner),
-      ...services.map(listing => listing.owner)
+      ...stayListings.map((listing) => listing.owner),
+      ...officeSpaces.map((listing) => listing.owner),
+      ...carRentals.map((listing) => listing.owner),
+      ...services.map((listing) => listing.owner),
     ];
     const uniqueOwnerIds = [...new Set(ownerIds)];
 
     // Fetch all bookings
     const stayBookings = await Booking.find({
-      listingId: { $in: stayListings.map(listing => listing._id) }
+      listingId: { $in: stayListings.map((listing) => listing._id) },
     }).lean();
     const officeBookings = await CoofficeBooking.find({
-      officeId: { $in: officeSpaces.map(listing => listing._id) }
+      officeId: { $in: officeSpaces.map((listing) => listing._id) },
     }).lean();
     const rentalBookings = await Rental.find({
-      rentalId: { $in: carRentals.map(listing => listing._id) }
+      rentalId: { $in: carRentals.map((listing) => listing._id) },
     }).lean();
     const serviceBookings = await ServiceBooking.find({
-      serviceId: { $in: services.map(listing => listing._id) }
+      serviceId: { $in: services.map((listing) => listing._id) },
     }).lean();
 
     // Collect all user IDs from bookings
     const userIds = [
-      ...stayBookings.map(booking => booking.userId),
-      ...officeBookings.map(booking => booking.userId),
-      ...rentalBookings.map(booking => booking.userId),
-      ...serviceBookings.map(booking => booking.userId)
+      ...stayBookings.map((booking) => booking.userId),
+      ...officeBookings.map((booking) => booking.userId),
+      ...rentalBookings.map((booking) => booking.userId),
+      ...serviceBookings.map((booking) => booking.userId),
     ];
     const uniqueUserIds = [...new Set(userIds)];
 
     // Fetch users and payouts in parallel
     const [users, ownerPayouts] = await Promise.all([
       User.find({ _id: { $in: uniqueUserIds } }).lean(),
-      Payout.find({ userId: { $in: uniqueOwnerIds } }).lean()
+      Payout.find({ userId: { $in: uniqueOwnerIds } }).lean(),
     ]);
 
     // Create maps for users and payouts
@@ -1744,29 +1809,29 @@ const getAllBookingsGeneral = async (req, res) => {
         type: "stay",
         user: userMap[booking.userId],
         listing: stayListingMap[booking.listingId],
-        ownerPayout: payoutMap[stayListingMap[booking.listingId].owner] || null
+        ownerPayout: payoutMap[stayListingMap[booking.listingId].owner] || null,
       })),
       ...officeBookings.map((booking) => ({
         ...booking,
         type: "office",
         user: userMap[booking.userId],
         listing: officeSpaceMap[booking.officeId],
-        ownerPayout: payoutMap[officeSpaceMap[booking.officeId].owner] || null
+        ownerPayout: payoutMap[officeSpaceMap[booking.officeId].owner] || null,
       })),
       ...rentalBookings.map((booking) => ({
         ...booking,
         type: "rental",
         user: userMap[booking.userId],
         listing: carRentalMap[booking.rentalId],
-        ownerPayout: payoutMap[carRentalMap[booking.rentalId].owner] || null
+        ownerPayout: payoutMap[carRentalMap[booking.rentalId].owner] || null,
       })),
       ...serviceBookings.map((booking) => ({
         ...booking,
         type: "service",
         user: userMap[booking.userId],
         listing: serviceMap[booking.serviceId],
-        ownerPayout: payoutMap[serviceMap[booking.serviceId].owner] || null
-      }))
+        ownerPayout: payoutMap[serviceMap[booking.serviceId].owner] || null,
+      })),
     ];
 
     res.status(200).json(allBookings);
@@ -2531,22 +2596,28 @@ const getListingData = async (req, res) => {
   try {
     const { id } = req.params;
 
-
     const listing = await StayListing.findById(id).lean();
-
     if (!listing) {
       return res.status(404).json({ error: "Listing not found" });
     }
 
     const images = await MediaTag.find({ listing_id: id }).lean();
+    const reviews = await Reviews.find({ listingId: id }).lean(); // Assuming you have a Review model
 
+    // Calculate average rating and review count
+    const reviewCount = reviews.length;
+    const averageRating = reviewCount
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviewCount
+      : null;
 
     const listingWithImages = {
       ...listing,
       images: images.map((image) => ({
         ...image,
-        url: `${image.media_location}`, // Construct image URL
+        url: `${image.media_location}`,
       })),
+      reviewCount,
+      averageRating,
     };
 
     res.status(200).json(listingWithImages);
@@ -2555,7 +2626,6 @@ const getListingData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch listing data" });
   }
 };
-
 const getCooffices = async (req, res) => {
   try {
     const {
@@ -2578,24 +2648,21 @@ const getCooffices = async (req, res) => {
       minSize,
       limit,
       offset,
+      minRating // New query parameter for filtering by minimum rating
     } = req.query;
 
     const filters = {};
 
-    // Add case-insensitive filter for location (city or state)
+    // Add filters for location, office type, amenities, rules, etc.
     if (location) {
       filters.$or = [
         { city: { $regex: new RegExp(location, "i") } },
         { state_name: { $regex: new RegExp(location, "i") } },
       ];
     }
-
-    // Add filter for office type
     if (officeType) {
       filters.office_type = { $regex: new RegExp(officeType, "i") };
     }
-
-    // Add filters for amenities and rules
     if (wifi) filters.wifi = wifi === "true";
     if (conferenceRoom) filters.conference_room = conferenceRoom === "true";
     if (parking) filters.parking = parking === "true";
@@ -2604,55 +2671,79 @@ const getCooffices = async (req, res) => {
     if (smoking) filters.smoking = smoking === "true";
     if (noLoudNoises) filters.no_loud_noises = noLoudNoises === "true";
     if (catering) filters.catering = catering === "true";
-    if (administrativeSupport)
-      filters.administrative_support = administrativeSupport === "true";
+    if (administrativeSupport) filters.administrative_support = administrativeSupport === "true";
 
-    // Add filters for price (using price_per_day)
+    // Price filters
     if (minPrice) filters.price_per_day = { $gte: Number(minPrice) };
     if (maxPrice) {
       filters.price_per_day = filters.price_per_day || {};
       filters.price_per_day.$lte = Number(maxPrice);
     }
 
-    // Add filters for availability
-    if (availableFrom)
-      filters.available_from = { $lte: new Date(availableFrom) };
+    // Availability, desks, and size filters
+    if (availableFrom) filters.available_from = { $lte: new Date(availableFrom) };
     if (availableTo) filters.available_to = { $gte: new Date(availableTo) };
-
-    // Add filter for minimum number of desks
     if (minDesks) filters.number_of_desks = { $gte: Number(minDesks) };
-
-    // Add filter for minimum office size
     if (minSize) filters.size_of_office = { $gte: Number(minSize) };
 
+    // Initial fetch of cooffice listings based on filters
     let cooffices = await OfficeSpace.find(filters)
       .skip(Number(offset) || 0)
       .limit(Number(limit) || 10)
       .lean();
 
     if (cooffices.length === 0) {
-      // If no cooffices are found, fetch without filters
       cooffices = await OfficeSpace.find()
         .skip(Number(offset) || 0)
         .limit(Number(limit) || 10)
         .lean();
     }
 
-    const coofficesWithImages = await Promise.all(
+    // Process each cooffice to add images and rating details
+    const coofficesWithDetails = await Promise.all(
       cooffices.map(async (cooffice) => {
-        const images = await MediaTag.find({
-          listing_id: cooffice._id,
-        }).lean();
-        return { ...cooffice, images };
+        const images = await MediaTag.find({ listing_id: cooffice._id }).lean();
+
+        // Aggregate review data for each cooffice
+        const reviewData = await Reviews.aggregate([
+          { $match: { listingId: cooffice._id } },
+          {
+            $group: {
+              _id: "$listing_id",
+              averageRating: { $avg: { $toDouble: "$rating" } },
+              reviewCount: { $sum: 1 },
+            },
+          },
+        ]);
+
+        const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+        const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
+        return {
+          ...cooffice,
+          images: images.map((image) => ({
+            ...image,
+            url: `${image.media_location}`,
+          })),
+          averageRating,
+          reviewCount,
+        };
       })
     );
 
-    res.status(200).json(coofficesWithImages);
+    // Filter listings to only include those with the exact rating specified by the user
+    const filteredCooffices = coofficesWithDetails.filter(
+      (cooffice) => !minRating || cooffice.averageRating === Number(minRating)
+    );
+
+    res.status(200).json(filteredCooffices);
   } catch (error) {
     console.error("Error fetching cooffices:", error);
     res.status(500).json({ error: "Failed to fetch cooffices" });
   }
 };
+
+
 
 const getListings = async (req, res) => {
   try {
@@ -2681,60 +2772,83 @@ const getListings = async (req, res) => {
     }
 
     if (location) {
-      filters.city = { $regex: new RegExp(location, "i") }; // Case-insensitive search for location
+      filters.city = { $regex: new RegExp(location, "i") };
     }
 
-    // Add filter for date
+    // Date filter
     if (date) {
-      filters.available_from = { $lte: new Date(date) }; // Ensure the stay is available before or on the selected date
+      filters.available_from = { $lte: new Date(date) };
     }
 
-    // Add filter for people (maximum occupancy)
+    // People, rooms, and amenities filters
     if (people) {
-      filters.maximum_occupancy = { $gte: Number(people) }; // Ensure the stay can accommodate the specified number of people
+      filters.maximum_occupancy = { $gte: Number(people) };
     }
 
-    // Add filter for rooms
     if (rooms) {
-      filters.number_of_rooms = { $gte: Number(rooms) }; // Ensure the stay has at least the specified number of rooms
+      filters.number_of_rooms = { $gte: Number(rooms) };
     }
 
-    // Add additional filters for amenities
     if (pool) filters.pool = pool === "true";
     if (wifi) filters.wifi = wifi === "true";
     if (parking) filters.parking = parking === "true";
     if (gym) filters.gym = gym === "true";
 
-    // Add filters for price
+    // Price filters
     if (minPrice) filters.price_per_night = { $gte: Number(minPrice) };
     if (maxPrice) {
       filters.price_per_night = filters.price_per_night || {};
       filters.price_per_night.$lte = Number(maxPrice);
     }
 
-    // Add filter for ratings
-    if (ratings) filters.ratings = Number(ratings);
-  filters.status = "active";
+    filters.status = "active";
+
+    // Find listings based on filters
     let listings = await StayListing.find(filters)
-      .skip(offset) // Skip the first 'offset' listings
-      .limit(limit) // Limit the number of listings to 'limit'
+      .skip(offset)
+      .limit(limit)
       .lean();
 
+    // If no listings are found, fetch without filters
     if (listings.length === 0) {
-      // If no listings are found, fetch without filters
-      listings = await StayListing.find({
-        status: "active",
-      }).skip(offset).limit(limit).lean();
+      listings = await StayListing.find({ status: "active" })
+        .skip(offset)
+        .limit(limit)
+        .lean();
     }
 
-    const listingsWithImages = await Promise.all(
+    // Calculate average rating and count of reviews for each listing, then add images
+    const listingsWithDetails = await Promise.all(
       listings.map(async (listing) => {
         const images = await MediaTag.find({ listing_id: listing._id }).lean();
-        return { ...listing, images };
+
+        // Aggregate to get the average rating and review count for the listing
+        const reviewData = await Reviews.aggregate([
+          { $match: { listingId: listing._id } },
+          {
+            $group: {
+              _id: "$listingId",
+              averageRating: { $avg: { $toDouble: "$rating" } },
+              reviewCount: { $sum: 1 },
+            },
+          },
+        ]);
+
+        const averageRating =
+          reviewData.length > 0 ? reviewData[0].averageRating : null;
+        const reviewCount =
+          reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
+        return { ...listing, images, averageRating, reviewCount };
       })
     );
 
-    res.status(200).json(listingsWithImages);
+    // Filter listings to only include those with the exact rating specified by the user
+    const filteredListings = listingsWithDetails.filter(
+      (listing) => !ratings || listing.averageRating === Number(ratings)
+    );
+
+    res.status(200).json(filteredListings);
   } catch (error) {
     console.error("Error fetching listings:", error);
     res.status(500).json({ error: "Failed to fetch listings" });
@@ -2758,18 +2872,23 @@ const uploadReceipt = async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+    ];
     if (!allowedTypes.includes(req.file.mimetype)) {
-
       fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: "Invalid file type. Only images and PDFs are allowed." });
+      return res.status(400).json({
+        error: "Invalid file type. Only images and PDFs are allowed.",
+      });
     }
 
     const bookingId = req.params.bookingId;
-    
+
     const booking = await Booking.findById(bookingId);
     if (!booking) {
- 
       fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: "Booking not found" });
     }
@@ -2777,7 +2896,7 @@ const uploadReceipt = async (req, res) => {
     const receipt = new Receipts({
       booking_id: bookingId,
       media_name: req.file.filename,
-      media_location: req.file.path
+      media_location: req.file.path,
     });
 
     await receipt.save();
@@ -2786,8 +2905,8 @@ const uploadReceipt = async (req, res) => {
       message: "Receipt uploaded successfully",
       receipt: {
         id: receipt._id,
-        filename: receipt.media_name
-      }
+        filename: receipt.media_name,
+      },
     });
   } catch (error) {
     // Clean up uploaded file if there's an error
@@ -2804,18 +2923,23 @@ const uploadReceiptPickup = async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+    ];
     if (!allowedTypes.includes(req.file.mimetype)) {
-
       fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: "Invalid file type. Only images and PDFs are allowed." });
+      return res.status(400).json({
+        error: "Invalid file type. Only images and PDFs are allowed.",
+      });
     }
-    
+
     const bookingId = req.params.bookingId;
 
     const booking = await ServiceBooking.findById(bookingId);
     if (!booking) {
-
       fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: "Booking not found" });
     }
@@ -2823,7 +2947,7 @@ const uploadReceiptPickup = async (req, res) => {
     const receipt = new Receipts({
       booking_id: bookingId,
       media_name: req.file.filename,
-      media_location: req.file.path
+      media_location: req.file.path,
     });
 
     await receipt.save();
@@ -2832,8 +2956,8 @@ const uploadReceiptPickup = async (req, res) => {
       message: "Receipt uploaded successfully",
       receipt: {
         id: receipt._id,
-        filename: receipt.media_name
-      }
+        filename: receipt.media_name,
+      },
     });
   } catch (error) {
     if (req.file) {
@@ -2849,19 +2973,23 @@ const uploadReceiptOffice = async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+    ];
     if (!allowedTypes.includes(req.file.mimetype)) {
-
       fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: "Invalid file type. Only images and PDFs are allowed." });
+      return res.status(400).json({
+        error: "Invalid file type. Only images and PDFs are allowed.",
+      });
     }
 
     const bookingId = req.params.bookingId;
-    
 
     const booking = await CoofficeBooking.findById(bookingId);
     if (!booking) {
-    
       fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: "Booking not found" });
     }
@@ -2869,7 +2997,7 @@ const uploadReceiptOffice = async (req, res) => {
     const receipt = new Receipts({
       booking_id: bookingId,
       media_name: req.file.filename,
-      media_location: req.file.path
+      media_location: req.file.path,
     });
 
     await receipt.save();
@@ -2878,11 +3006,10 @@ const uploadReceiptOffice = async (req, res) => {
       message: "Receipt uploaded successfully",
       receipt: {
         id: receipt._id,
-        filename: receipt.media_name
-      }
+        filename: receipt.media_name,
+      },
     });
   } catch (error) {
-   
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
@@ -2897,25 +3024,31 @@ const uploadReceiptRental = async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+    ];
     if (!allowedTypes.includes(req.file.mimetype)) {
-      fs.unlinkSync(req.file.path); 
-      return res.status(400).json({ error: "Invalid file type. Only images and PDFs are allowed." });
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({
+        error: "Invalid file type. Only images and PDFs are allowed.",
+      });
     }
 
     const bookingId = req.params.bookingId;
-    
-   
+
     const booking = await Rental.findById(bookingId);
     if (!booking) {
-      fs.unlinkSync(req.file.path); 
+      fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: "Booking not found" });
     }
 
     const receipt = new Receipts({
       booking_id: bookingId,
       media_name: req.file.filename,
-      media_location: req.file.path 
+      media_location: req.file.path,
     });
 
     await receipt.save();
@@ -2925,11 +3058,10 @@ const uploadReceiptRental = async (req, res) => {
       receipt: {
         id: receipt._id,
         media_name: receipt.media_name,
-        media_location: receipt.media_location // Return the path to the uploaded file
-      }
+        media_location: receipt.media_location, // Return the path to the uploaded file
+      },
     });
   } catch (error) {
-
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
@@ -3002,10 +3134,11 @@ const createRental = async (req, res) => {
     if (!parsedBody.insurance) validationErrors.push("Insurance is required");
     if (!parsedBody.fuel) validationErrors.push("Fuel is required");
 
-        
     if (!req.files || req.files.length < 4 || req.files.length > 15) {
       validationErrors.push(
-        `Please upload between 4 and 15 images. You uploaded ${req.files ? req.files.length : 0}.`
+        `Please upload between 4 and 15 images. You uploaded ${
+          req.files ? req.files.length : 0
+        }.`
       );
     }
 
@@ -3047,7 +3180,6 @@ const createRental = async (req, res) => {
   }
 };
 const updateRental = async (req, res) => {
-  
   try {
     const { token } = req.cookies;
     if (!token) {
@@ -3100,9 +3232,11 @@ const updateRental = async (req, res) => {
 
       // Handle existing images
       const existingImages = req.body.existingImages;
-      const existingImageUrls = Array.isArray(existingImages) 
-        ? existingImages 
-        : existingImages ? [existingImages] : [];
+      const existingImageUrls = Array.isArray(existingImages)
+        ? existingImages
+        : existingImages
+        ? [existingImages]
+        : [];
 
       const currentMediaTags = await MediaTag.find({ listing_id: id });
 
@@ -3115,7 +3249,7 @@ const updateRental = async (req, res) => {
         await MediaTag.deleteMany(
           {
             listing_id: id,
-            media_location: { $in: toDelete.map(tag => tag.media_location) }
+            media_location: { $in: toDelete.map((tag) => tag.media_location) },
           },
           { session }
         );
@@ -3123,7 +3257,7 @@ const updateRental = async (req, res) => {
 
       // Handle new images - Keep existing images and add new ones if provided
       if (req.files && req.files.length > 0) {
-        const newMediaTags = req.files.map(file => ({
+        const newMediaTags = req.files.map((file) => ({
           listing_id: existingRental._id,
           media_name: file.filename,
           media_location: file.path,
@@ -3138,16 +3272,16 @@ const updateRental = async (req, res) => {
 
       // Get updated rental with all images
       const updatedMediaTags = await MediaTag.find({ listing_id: id });
-      
+
       res.status(200).json({
         message: "Rental updated successfully",
         rental: {
           ...existingRental.toObject(),
-          images: updatedMediaTags.map(tag => ({
+          images: updatedMediaTags.map((tag) => ({
             location: tag.media_location,
-            name: tag.media_name
-          }))
-        }
+            name: tag.media_name,
+          })),
+        },
       });
     } catch (error) {
       await session.abortTransaction();
@@ -3160,7 +3294,6 @@ const updateRental = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 const updateListing = async (req, res) => {
   try {
@@ -3221,59 +3354,61 @@ const updateListing = async (req, res) => {
       Object.assign(existingListing, parsedBody);
       await existingListing.save({ session });
 
- // Handle existing images
-const existingImages = req.body.existingImages;
-// Ensure we always have an array, even with a single image
-const existingImageUrls = Array.isArray(existingImages) 
-  ? existingImages 
-  : existingImages ? [existingImages] : [];
+      // Handle existing images
+      const existingImages = req.body.existingImages;
+      // Ensure we always have an array, even with a single image
+      const existingImageUrls = Array.isArray(existingImages)
+        ? existingImages
+        : existingImages
+        ? [existingImages]
+        : [];
 
-// Get current media tags
-const currentMediaTags = await MediaTag.find({ listing_id: id });
+      // Get current media tags
+      const currentMediaTags = await MediaTag.find({ listing_id: id });
 
-// Find media tags to delete (those not in existingImageUrls)
-const toDelete = currentMediaTags.filter(
-  (tag) => !existingImageUrls.includes(tag.media_location)
-);
+      // Find media tags to delete (those not in existingImageUrls)
+      const toDelete = currentMediaTags.filter(
+        (tag) => !existingImageUrls.includes(tag.media_location)
+      );
 
-// Delete only the removed media tags
-if (toDelete.length > 0) {
-  await MediaTag.deleteMany(
-    { 
-      listing_id: id,
-      media_location: { $in: toDelete.map(tag => tag.media_location) }
-    },
-    { session }
-  );
-}
+      // Delete only the removed media tags
+      if (toDelete.length > 0) {
+        await MediaTag.deleteMany(
+          {
+            listing_id: id,
+            media_location: { $in: toDelete.map((tag) => tag.media_location) },
+          },
+          { session }
+        );
+      }
 
-// Handle new images - Keep existing images and add new ones
-if (req.files && req.files.length > 0) {
-  const newMediaTags = req.files.map(file => ({
-    listing_id: existingListing._id,
-    media_name: file.filename,
-    media_location: file.path,
-    size: file.size,
-  }));
+      // Handle new images - Keep existing images and add new ones
+      if (req.files && req.files.length > 0) {
+        const newMediaTags = req.files.map((file) => ({
+          listing_id: existingListing._id,
+          media_name: file.filename,
+          media_location: file.path,
+          size: file.size,
+        }));
 
-  await MediaTag.insertMany(newMediaTags, { session });
-}
+        await MediaTag.insertMany(newMediaTags, { session });
+      }
 
       // Commit the transaction
       await session.commitTransaction();
 
       // Get updated listing with all images
       const updatedMediaTags = await MediaTag.find({ listing_id: id });
-      
+
       res.status(200).json({
         message: "Stay listing updated successfully",
         stay_listing: {
           ...existingListing.toObject(),
-          images: updatedMediaTags.map(tag => ({
+          images: updatedMediaTags.map((tag) => ({
             location: tag.media_location,
-            name: tag.media_name
-          }))
-        }
+            name: tag.media_name,
+          })),
+        },
       });
     } catch (error) {
       await session.abortTransaction();
@@ -3341,7 +3476,9 @@ const updateService = async (req, res) => {
       const existingImages = req.body.existingImages;
       const existingImageUrls = Array.isArray(existingImages)
         ? existingImages
-        : existingImages ? [existingImages] : [];
+        : existingImages
+        ? [existingImages]
+        : [];
 
       const currentMediaTags = await MediaTag.find({ listing_id: id });
 
@@ -3355,7 +3492,7 @@ const updateService = async (req, res) => {
         await MediaTag.deleteMany(
           {
             listing_id: id,
-            media_location: { $in: toDelete.map(tag => tag.media_location) }
+            media_location: { $in: toDelete.map((tag) => tag.media_location) },
           },
           { session }
         );
@@ -3363,7 +3500,7 @@ const updateService = async (req, res) => {
 
       // Handle new images - Keep existing images and add new ones
       if (req.files && req.files.length > 0) {
-        const newMediaTags = req.files.map(file => ({
+        const newMediaTags = req.files.map((file) => ({
           listing_id: existingService._id,
           media_name: file.filename,
           media_location: file.path,
@@ -3378,16 +3515,16 @@ const updateService = async (req, res) => {
 
       // Get updated service with all images
       const updatedMediaTags = await MediaTag.find({ listing_id: id });
-      
+
       res.status(200).json({
         message: "Service updated successfully",
         service: {
           ...existingService.toObject(),
-          images: updatedMediaTags.map(tag => ({
+          images: updatedMediaTags.map((tag) => ({
             location: tag.media_location,
-            name: tag.media_name
-          }))
-        }
+            name: tag.media_name,
+          })),
+        },
       });
     } catch (error) {
       await session.abortTransaction();
@@ -3434,12 +3571,10 @@ const getStayListing = async (req, res) => {
         images,
       },
     });
-
   } catch (error) {
     console.error("Error fetching stay listing:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-   
 };
 
 const getServiceListing = async (req, res) => {
@@ -3514,7 +3649,6 @@ const getOfficeListing = async (req, res) => {
         images,
       },
     });
-
   } catch (error) {
     console.error("Error fetching stay listing:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -3554,12 +3688,10 @@ const getRentalListing = async (req, res) => {
         images,
       },
     });
-
   } catch (error) {
     console.error("Error fetching stay listing:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-   
 };
 
 const createStayListing = async (req, res) => {
@@ -3624,10 +3756,11 @@ const createStayListing = async (req, res) => {
     if (isNaN(parsedBody.monthly_discount))
       validationErrors.push("Invalid monthly discount");
 
-    
     if (!req.files || req.files.length < 4 || req.files.length > 15) {
       validationErrors.push(
-        `Please upload between 4 and 15 images. You uploaded ${req.files ? req.files.length : 0}.`
+        `Please upload between 4 and 15 images. You uploaded ${
+          req.files ? req.files.length : 0
+        }.`
       );
     }
 
@@ -3733,7 +3866,9 @@ const updateOffice = async (req, res) => {
       const existingImages = req.body.existingImages;
       const existingImageUrls = Array.isArray(existingImages)
         ? existingImages
-        : existingImages ? [existingImages] : [];
+        : existingImages
+        ? [existingImages]
+        : [];
 
       // Get current media tags
       const currentMediaTags = await MediaTag.find({ listing_id: id });
@@ -3748,7 +3883,7 @@ const updateOffice = async (req, res) => {
         await MediaTag.deleteMany(
           {
             listing_id: id,
-            media_location: { $in: toDelete.map(tag => tag.media_location) }
+            media_location: { $in: toDelete.map((tag) => tag.media_location) },
           },
           { session }
         );
@@ -3756,7 +3891,7 @@ const updateOffice = async (req, res) => {
 
       // Handle new images - Keep existing images and add new ones
       if (req.files && req.files.length > 0) {
-        const newMediaTags = req.files.map(file => ({
+        const newMediaTags = req.files.map((file) => ({
           listing_id: existingOffice._id,
           media_name: file.filename,
           media_location: file.path,
@@ -3776,11 +3911,11 @@ const updateOffice = async (req, res) => {
         message: "Office listing updated successfully",
         office_listing: {
           ...existingOffice.toObject(),
-          images: updatedMediaTags.map(tag => ({
+          images: updatedMediaTags.map((tag) => ({
             location: tag.media_location,
             name: tag.media_name,
-          }))
-        }
+          })),
+        },
       });
     } catch (error) {
       await session.abortTransaction();
@@ -3794,6 +3929,53 @@ const updateOffice = async (req, res) => {
   }
 };
 
+const Review = async (req, res) => {
+  const { userId, bookingId, listingId, rating, review } = req.body;
+
+  try {
+    // Check if a review for the user and booking already exists
+    const existingReview = await Reviews.findOne({ userId, bookingId });
+
+    if (existingReview) {
+      // Update the existing review
+      existingReview.rating = rating;
+      existingReview.review = review;
+      await existingReview.save();
+      res.status(200).json({ message: "Review updated successfully" });
+    } else {
+      // Create a new review
+      const newReview = new Reviews({
+        userId,
+        bookingId,
+        listingId,
+        rating,
+        review,
+      });
+      await newReview.save();
+      res.status(200).json({ message: "Review submitted successfully" });
+    }
+  } catch (error) {
+    console.error("Error saving review:", error);
+    res.status(500).json({ message: "Failed to submit review" });
+  }
+};
+
+const getReview = async (req, res) => {
+  const { userId, bookingId } = req.params;
+
+  try {
+    const review = await Reviews.findOne({ userId, bookingId });
+
+    if (review) {
+      res.status(200).json(review);
+    } else {
+      res.status(404).json({ message: "No review found" });
+    }
+  } catch (error) {
+    console.error("Error fetching review:", error);
+    res.status(500).json({ message: "Failed to fetch review" });
+  }
+};
 
 const createOfficeListing = async (req, res) => {
   try {
@@ -3857,7 +4039,9 @@ const createOfficeListing = async (req, res) => {
 
     if (!req.files || req.files.length < 4 || req.files.length > 15) {
       validationErrors.push(
-        `Please upload between 4 and 15 images. You uploaded ${req.files ? req.files.length : 0}.`
+        `Please upload between 4 and 15 images. You uploaded ${
+          req.files ? req.files.length : 0
+        }.`
       );
     }
 
@@ -4324,12 +4508,12 @@ const loginPartner = async (req, res) => {
 
         // Send login notification email
         const loginTime = new Date().toLocaleString();
-      //  try {
-       //   await sendLoginEmail(user.email, loginTime);
-       // } catch (emailError) {
-       //   console.error("Error sending login notification email:", emailError);
-     //   
-      //  }
+        //  try {
+        //   await sendLoginEmail(user.email, loginTime);
+        // } catch (emailError) {
+        //   console.error("Error sending login notification email:", emailError);
+        //
+        //  }
 
         res.cookie("token", token).json(user);
       }
@@ -4411,7 +4595,6 @@ const logoutUser = (req, res) => {
 };
 
 const createService = async (req, res) => {
-
   try {
     const { token } = req.cookies;
     if (!token) {
@@ -4461,7 +4644,9 @@ const createService = async (req, res) => {
 
     if (!req.files || req.files.length < 4 || req.files.length > 15) {
       validationErrors.push(
-        `Please upload between 4 and 15 images. You uploaded ${req.files ? req.files.length : 0}.`
+        `Please upload between 4 and 15 images. You uploaded ${
+          req.files ? req.files.length : 0
+        }.`
       );
     }
 
@@ -4488,9 +4673,7 @@ const createService = async (req, res) => {
     res
       .status(201)
       .json({ message: "Service created successfully", service: newService });
-  
-    } catch (error) {
-
+  } catch (error) {
     console.error("Error creating service:", error);
     if (error.name === "ValidationError") {
       const validationErrors = Object.values(error.errors).map(
@@ -4501,11 +4684,8 @@ const createService = async (req, res) => {
         .json({ error: "Validation failed", details: validationErrors });
     }
     res.status(500).json({ error: "Internal server error" });
-
   }
-
 };
-
 
 const getFullProfile = async (req, res) => {
   const { token } = req.cookies; // Make sure token is set in cookies
@@ -4868,5 +5048,6 @@ module.exports = {
   updateRental,
   updateOffice,
   updateService,
-
+  getReview,
+  Review,
 };

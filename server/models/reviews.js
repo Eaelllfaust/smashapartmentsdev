@@ -6,6 +6,9 @@ const reviewsSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
+    listingId: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
     review: { type: String },
     rating: {
       type: String,

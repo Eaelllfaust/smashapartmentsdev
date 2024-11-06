@@ -178,12 +178,9 @@ export default function ReserveCooffice() {
                       <div style={{ display: "flex", alignItems: "center" }}>
                         <h2>{officeDetails.office_space_name}</h2>
                         <div className="star_holder">
-                          {/* You might want to add a rating system for offices */}
-                          <i className="bx bx-star" />
-                          <i className="bx bx-star" />
-                          <i className="bx bx-star" />
-                          <i className="bx bx-star" />
-                          <i className="bx bx-star" />
+                          {[...Array(5)].map((_, i) => (
+                            <i key={i} className={`bx bx-star ${i < Math.floor(officeDetails.averageRating || 0) ? 'bxs-star' : ''}`} />
+                          ))}
                         </div>
                       </div>
                       <h3 className="small_1" style={{ marginTop: 10 }}>
@@ -191,23 +188,27 @@ export default function ReserveCooffice() {
                       </h3>
                     </div>
                     <div style={{ display: "flex", alignItems: "center" }}>
-                      <div className="n94">
-                        <h3>
-                          {officeDetails.ratings >= 4.5 ? "Excellent" : "Good"}
-                        </h3>
-                        <h3>{officeDetails.reviews || "No reviews"}</h3>
-                      </div>
-                      <div
-                        className="button b3"
-                        style={{
-                          marginLeft: 10,
-                          maxWidth: "50px !important",
-                          minWidth: "100px !important",
-                        }}
-                      >
-                        {officeDetails.ratings || "N/A"}
-                      </div>
+                    <div className="n94">
+                      <h3>
+                        {officeDetails.averageRating >= 4.5 ? "Excellent" : "Good"}
+                      </h3>
+                      <h3>
+                        {officeDetails.reviewCount
+                          ? `${officeDetails.reviewCount} reviews`
+                          : "No reviews"}
+                      </h3>
                     </div>
+                    <div
+                      className="rating_cont"
+                      style={{
+                        marginLeft: 10,
+                        maxWidth: "50px !important",
+                        minWidth: "100px !important",
+                      }}
+                    >
+                      {officeDetails.averageRating || "N/A"} <i className="bx bxs-star"></i>
+                    </div>
+                  </div>
                   </div>
                   <div className="l33">
                     <div className="o93">

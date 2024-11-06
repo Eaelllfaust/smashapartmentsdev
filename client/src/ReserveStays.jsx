@@ -4,6 +4,7 @@ import axios from "axios";
 import { UserContext } from "../context/userContext";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import StaysDetails from "./StaysDetails";
 
 export default function ReserveStays() {
   const [searchParams] = useSearchParams();
@@ -200,16 +201,8 @@ export default function ReserveStays() {
                       <div style={{ display: "flex", alignItems: "center" }}>
                         <h2>{stayDetails.property_name}</h2>
                         <div className="star_holder">
-                          {/* Render star rating based on stayDetails rating */}
-                          {[...Array(5)].map((_, index) => (
-                            <i
-                              key={index}
-                              className={`bx bx-star ${
-                                index < (stayDetails.ratings || 0)
-                                  ? "filled"
-                                  : ""
-                              }`}
-                            />
+                          {[...Array(5)].map((_, i) => (
+                            <i key={i} className={`bx bx-star ${i < Math.floor(stayDetails.averageRating || 0) ? 'bxs-star' : ''}`} />
                           ))}
                         </div>
                       </div>
@@ -218,23 +211,27 @@ export default function ReserveStays() {
                       </h3>
                     </div>
                     <div style={{ display: "flex", alignItems: "center" }}>
-                      <div className="n94">
-                        <h3>
-                          {stayDetails.ratings >= 4.5 ? "Excellent" : "Good"}
-                        </h3>
-                        <h3>{stayDetails.reviews || "No reviews"}</h3>
-                      </div>
-                      <div
-                        className="rating_cont"
-                        style={{
-                          marginLeft: 10,
-                          maxWidth: "50px !important",
-                          minWidth: "100px !important",
-                        }}
-                      >
-                        {stayDetails.ratings || "N/A"}
-                      </div>
+                    <div className="n94">
+                      <h3>
+                        {stayDetails.averageRating >= 4.5 ? "Excellent" : "Good"}
+                      </h3>
+                      <h3>
+                        {stayDetails.reviewCount
+                          ? `${stayDetails.reviewCount} reviews`
+                          : "No reviews"}
+                      </h3>
                     </div>
+                    <div
+                      className="rating_cont"
+                      style={{
+                        marginLeft: 10,
+                        maxWidth: "50px !important",
+                        minWidth: "100px !important",
+                      }}
+                    >
+                      {stayDetails.averageRating || "N/A"} <i className="bx bxs-star"></i>
+                    </div>
+                  </div>
                   </div>
                   <div className="l33">
                     <div className="o93">

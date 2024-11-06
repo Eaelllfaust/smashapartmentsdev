@@ -102,10 +102,10 @@ export default function CoofficeDetails() {
                     <div style={{ display: "flex", alignItems: "center" }}>
                       <h2>{cooffice.office_space_name}</h2>
                       <div className="star_holder">
-                        {[...Array(5)].map((_, index) => (
-                          <i className={`bx bx-star ${index < (cooffice.ratings || 0) ? 'filled' : ''}`} key={index} />
-                        ))}
-                      </div>
+                          {[...Array(5)].map((_, i) => (
+                            <i key={i} className={`bx bx-star ${i < Math.floor(cooffice.averageRating || 0) ? 'bxs-star' : ''}`} />
+                          ))}
+                        </div>
                     </div>
                     <h3 className="small_1" style={{ marginTop: 10 }}>
                       {cooffice.city}
@@ -113,18 +113,24 @@ export default function CoofficeDetails() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center" }}>
                     <div className="n94">
-                      <h3>{cooffice.ratings >= 4.5 ? 'Excellent' : 'Good'}</h3>
-                      <h3>{cooffice.reviews || 'No reviews'}</h3>
+                      <h3>
+                        {cooffice.averageRating >= 4.5 ? "Excellent" : "Good"}
+                      </h3>
+                      <h3>
+                        {cooffice.reviewCount
+                          ? `${cooffice.reviewCount} reviews`
+                          : "No reviews"}
+                      </h3>
                     </div>
                     <div
                       className="rating_cont"
                       style={{
                         marginLeft: 10,
                         maxWidth: "50px !important",
-                        minWidth: "100px !important"
+                        minWidth: "100px !important",
                       }}
                     >
-                      {cooffice.ratings || 'N/A'}
+                      {cooffice.averageRating || "N/A"} <i className='bx bxs-star'></i>
                     </div>
                   </div>
                 </div>

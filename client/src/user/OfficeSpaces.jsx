@@ -4,8 +4,26 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import ReviewModal from "./ReviewModal";
 
 export default function OfficeSpaces() {
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [selectedListingId, setSelectedListingId] = useState(null);
+
+  const openReviewModal = (bookingId, listingId) => {
+    setSelectedBookingId(bookingId);
+    setSelectedListingId(listingId);
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedBookingId(null);
+    setSelectedListingId(null);
+  };
+
+  
   const { user, loading } = useContext(UserContext);
   const [bookings, setBookings] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -150,8 +168,10 @@ export default function OfficeSpaces() {
           <p>This is the number of office spaces you have: {bookings.length}</p>
         </div>
         <div className="all_data_current">
-          {bookings.length > 0 ? (
-            bookings.map((booking, index) => (
+        {bookings.length > 0 ? (
+            bookings
+              .filter((booking) => booking.officeDetails !== null) 
+              .map((booking, index) => (
               <div key={index} className="x9">
                 <div className="info">
                   <div className="info_intro">
@@ -206,6 +226,14 @@ export default function OfficeSpaces() {
                           Cancel
                         </div>
                       )}
+                        <div className="action">
+                        <div
+                          className="new_btn_2"
+                          onClick={() => openReviewModal(booking._id, booking.officeId)}
+                        >
+                          Review and rate
+                        </div>
+                      </div>
                       <div className="new_btn_2" onClick={() => document.querySelector(`#receipt-${booking._id}`).click()} disabled={uploading}>
                         {uploading ? 'Uploading...' : 'Upload receipt'}
                       </div>
@@ -242,6 +270,14 @@ export default function OfficeSpaces() {
           ) : (
             <p>No current bookings found.</p>
           )}
+       {showReviewModal && (
+              <ReviewModal
+                userId={user._id}
+                bookingId={selectedBookingId}
+                listingId={selectedListingId}
+                onClose={closeReviewModal}
+              />
+            )}
         </div>
       </section>
     </>

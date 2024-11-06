@@ -5,8 +5,23 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import CSS
+import ReviewModal from "./ReviewModal";
 
 export default function CarRentals() {
+  
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+
+  const openReviewModal = (bookingId) => {
+    setSelectedBookingId(bookingId);
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedBookingId(null);
+  };
+
   const { user, loading } = useContext(UserContext);
   const navigate = useNavigate();
   const [rentals, setRentals] = useState([]);
@@ -192,6 +207,14 @@ export default function CarRentals() {
                     )}
                   </div>
                   <div className="action">
+                        <div
+                          className="new_btn_2"
+                          onClick={() => openReviewModal(rental._id)}
+                        >
+                          Review and rate
+                        </div>
+                      </div>
+                  <div className="action">
                     <div className="new_btn_2" onClick={() => uploadReceipt(rental._id)}>Upload receipt</div>
                     <input 
                       style={{ display: "none" }} 
@@ -250,6 +273,13 @@ export default function CarRentals() {
         ) : (
           <p>No current rentals found.</p>
         )}
+          {showReviewModal && (
+              <ReviewModal
+                userId={user._id}
+                bookingId={selectedBookingId}
+                onClose={closeReviewModal}
+              />
+            )}
         </div>
       </section>
     </>
