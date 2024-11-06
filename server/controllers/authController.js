@@ -531,7 +531,6 @@ const getNewsletter = async (req, res) => {
     return res.status(500).json({ message: "An error occurred" });
   }
 };
-
 const getRentalDetails = async (req, res) => {
   try {
     const { id } = req.params; // Get rental ID from request parameters
@@ -546,21 +545,39 @@ const getRentalDetails = async (req, res) => {
     // Fetch associated images
     const images = await MediaTag.find({ listing_id: id }).lean();
 
-    // Combine rental data with images and construct image URLs
-    const rentalWithImages = {
+    // Aggregate to get the average rating and review count for this rental
+    const reviewData = await Reviews.aggregate([
+      { $match: { listingId: id } },
+      {
+        $group: {
+          _id: "$listingId",
+          averageRating: { $avg: { $toDouble: "$rating" } },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
+    // Combine rental data with images, ratings, and reviews
+    const rentalWithDetails = {
       ...rental,
       images: images.map((image) => ({
         ...image,
         url: `${image.media_location}`, // Construct image URL
       })),
+      averageRating,
+      reviewCount,
     };
 
-    res.status(200).json(rentalWithImages);
+    res.status(200).json(rentalWithDetails);
   } catch (error) {
     console.error("Error fetching rental data:", error);
     res.status(500).json({ error: "Failed to fetch rental data" });
   }
 };
+
 
 const getRentals = async (req, res) => {
   try {
@@ -632,25 +649,42 @@ const getRentals = async (req, res) => {
         .lean();
     }
 
-    // Fetch images for each rental
-    const rentalsWithImages = await Promise.all(
+    // Aggregate to get the average rating and review count for each rental
+    const rentalsWithDetails = await Promise.all(
       rentals.map(async (rental) => {
         const images = await MediaTag.find({ listing_id: rental._id }).lean();
+
+        // Aggregate ratings and review count
+        const reviewData = await Reviews.aggregate([
+          { $match: { listingId: rental._id } },
+          {
+            $group: {
+              _id: "$listingId",
+              averageRating: { $avg: { $toDouble: "$rating" } },
+              reviewCount: { $sum: 1 },
+            },
+          },
+        ]);
+
+        const averageRating = reviewData.length > 0 ? reviewData[0].averageRating : null;
+        const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+
         return {
           ...rental,
           images,
-          ratings: Math.random() * 5, // Random rating between 0 and 5
-          reviews: Math.floor(Math.random() * 500), // Random number of reviews
+          averageRating,
+          reviewCount,
         };
       })
     );
 
-    res.status(200).json(rentalsWithImages);
+    res.status(200).json(rentalsWithDetails);
   } catch (error) {
     console.error("Error fetching rentals:", error);
     res.status(500).json({ error: "Failed to fetch rentals" });
   }
 };
+
 
 const reserveAndBookPickup = async (req, res) => {
   try {

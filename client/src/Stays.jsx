@@ -194,8 +194,8 @@ export default function Stays() {
   const handleRatingChange = (e, rating) => {
     setFilters((prevFilters) => {
       const updatedRatings = e.target.checked
-        ? [...(prevFilters.ratings || []), rating]  // Add rating
-        : prevFilters.ratings.filter((r) => r !== rating);  // Remove rating
+        ? [...(prevFilters.ratings || []), rating]  
+        : prevFilters.ratings.filter((r) => r !== rating); 
       return { ...prevFilters, ratings: updatedRatings };
     });
   };
