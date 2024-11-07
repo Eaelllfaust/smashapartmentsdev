@@ -761,6 +761,7 @@ const reserveAndBookPickup = async (req, res) => {
       arrivalTime: arrivalTime,
       totalAmount: totalPrice
     });
+    await sendNewBookingNotificationToOwnerPickup(serviceId);
     res.status(201).json({
       message:
         "Payment verified and pickup service booking created successfully",
@@ -2619,6 +2620,255 @@ const sendNewBookingEmailRental = async (email, bookingDetails) => {
     throw error;
   }
 };
+const sendNewBookingNotificationToOwner = async (listingId) => {
+  // Fetch the stay listing details
+  const listing = await StayListing.findById(listingId).lean();
+  const propertyName = listing.property_name;
+
+  // Fetch the property owner's email
+  const owner = await User.findById(listing.owner).lean();
+  const ownerEmail = owner.email;
+  const ownerName = owner.first_name;
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Booking for Your Property on SmashApartment.com</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Property</h1>
+        <p>Hello, ${ownerName}</p>
+        <p>You have received a new booking request for your property <strong>${propertyName}</strong> on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+
+        <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [ownerEmail],
+    subject: "New Booking for Your Property on SmashApartment.com",
+    text: `You have received a new booking request for your property "${propertyName}". Please log in to your account to review and confirm this booking.`,
+    html: htmlTemplate,
+    category: "New Booking Notification",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("New booking notification email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending new booking notification email:", error);
+    throw error;
+  }
+};
+const sendNewBookingNotificationToOwnerOffice = async (officeId) => {
+  // Fetch the stay listing details
+  const listing = await OfficeSpace.findById(officeId).lean();
+  const propertyName = listing.office_space_name;
+
+  // Fetch the property owner's email
+  const owner = await User.findById(listing.owner).lean();
+  const ownerEmail = owner.email;
+  const ownerName = owner.first_name;
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Booking for Your Property on SmashApartment.com</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Property</h1>
+        <p>Hello, ${ownerName}</p>
+        <p>You have received a new booking request for your property <strong>${propertyName}</strong> on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+
+        <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [ownerEmail],
+    subject: "New Booking for Your Property on SmashApartment.com",
+    text: `You have received a new booking request for your property "${propertyName}". Please log in to your account to review and confirm this booking.`,
+    html: htmlTemplate,
+    category: "New Booking Notification",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("New booking notification email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending new booking notification email:", error);
+    throw error;
+  }
+};
+const sendNewBookingNotificationToOwnerPickup = async (serviceId) => {
+  // Fetch the stay listing details
+  const listing = await Service.findById(serviceId).lean();
+
+  // Fetch the property owner's email
+  const owner = await User.findById(listing.owner).lean();
+  const ownerEmail = owner.email;
+  const ownerName = owner.first_name;
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Booking for Your Property on SmashApartment.com</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Property</h1>
+        <p>Hello, ${ownerName}</p>
+        <p>You have received a new booking request for a pickup on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+
+        <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [ownerEmail],
+    subject: "New Booking for Your Service on SmashApartment.com",
+    text: `You have received a new booking request for your service. Please log in to your account to review and confirm this booking.`,
+    html: htmlTemplate,
+    category: "New Booking Notification",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("New booking notification email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending new booking notification email:", error);
+    throw error;
+  }
+};
+const sendNewBookingNotificationToOwnerRental = async (rentalId) => {
+
+  const listing = await CarRental.findById(rentalId).lean();
+
+  const owner = await User.findById(listing.owner).lean();
+  const ownerEmail = owner.email;
+  const ownerName = owner.first_name;
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Booking for Your Property on SmashApartment.com</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Rental</h1>
+        <p>Hello, ${ownerName}</p>
+        <p>You have received a new booking request for a rental on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+
+        <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [ownerEmail],
+    subject: "New Booking for Your Rental on SmashApartment.com",
+    text: `You have received a new booking request for a rental. Please log in to your account to review and confirm this booking.`,
+    html: htmlTemplate,
+    category: "New Booking Notification",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("New booking notification email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending new booking notification email:", error);
+    throw error;
+  }
+};
 const verifyPaymentAndBook = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -2690,6 +2940,7 @@ const verifyPaymentAndBook = async (req, res) => {
       guests: numPeople,
       totalAmount: final
     });
+    await sendNewBookingNotificationToOwner(listingId);
     res
       .status(201)
       .json({ message: "Payment verified and booking created successfully" });
@@ -2793,6 +3044,7 @@ const verifyPaymentAndBookRental = async (req, res) => {
       dropoffLocation,
       totalAmount: totalPrice
     });
+    await sendNewBookingNotificationToOwnerRental(rentalId);
     res.status(201).json({
       message: "Payment verified and rental booking created successfully",
     });
@@ -2870,6 +3122,7 @@ const verifyPaymentAndBookCooffice = async (req, res) => {
       checkOut: checkOutDate,
       totalAmount: final
     });
+    await sendNewBookingNotificationToOwnerOffice(officeId);
     res.status(201).json({
       message: "Payment verified and cooffice booking created successfully",
     });
