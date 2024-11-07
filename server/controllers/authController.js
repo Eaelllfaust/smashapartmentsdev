@@ -2547,6 +2547,78 @@ const sendNewBookingEmailPickup = async (email, bookingDetails) => {
     throw error;
   }
 };
+const sendNewBookingEmailRental = async (email, bookingDetails) => {
+  const listing = await CarRental.findById(bookingDetails.rentalId).lean();
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your SmashApartment.com Booking Confirmation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Rental Awaiting Confirmation</h1>
+        <p>Hello,</p>
+        <p>Thank you for choosing SmashApartment.com! Your rental request has been received and is currently awaiting confirmation.</p>
+        
+        <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
+            <p><strong>Pickup location:</strong> ${bookingDetails.pickupLocation}</p>
+            <p><strong>Pickup date:</strong> ${bookingDetails.pickupDate}</p>
+            <p><strong>Pickup time:</strong> ${bookingDetails.pickupTime}</p>
+            <p><strong>Drop off location:</strong> ${bookingDetails.dropoffLocation}</p>
+            <p><strong>Total Amount:</strong> ${bookingDetails.totalAmount}</p>
+        </div>
+
+        <p>What happens next?</p>
+        <ul style="padding-left: 20px;">
+            <li>The property owner will review your booking request</li>
+            <li>You will receive a confirmation email within 24 hours</li>
+            <li>No payment will be processed until your booking is confirmed</li>
+        </ul>
+
+        <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
+        <p>The SmashApartment.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
+        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject: "Your SmashApartment.com Rental Request",
+    text: `Thank you for your rental request. Your booking is awaiting confirmation.`,
+    html: htmlTemplate,
+    category: "Booking Confirmation",
+    sandbox:true
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Booking confirmation email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending booking confirmation email:", error);
+    throw error;
+  }
+};
 const verifyPaymentAndBook = async (req, res) => {
   try {
     const { token } = req.cookies;
@@ -2711,7 +2783,16 @@ const verifyPaymentAndBookRental = async (req, res) => {
     });
 
     await newRentalBooking.save();
-
+ 
+    await sendNewBookingEmailRental(decoded.email, {
+      rentalId: carRental._id,
+      withDriver,
+      pickupLocation,
+      pickupDate: pickupDateTime,
+      pickupTime,
+      dropoffLocation,
+      totalAmount: totalPrice
+    });
     res.status(201).json({
       message: "Payment verified and rental booking created successfully",
     });

@@ -25,7 +25,7 @@ export default function ReserveRental() {
   const [basePrice, setBasePrice] = useState(0);
 
   const VAT_RATE = 0.075; // 7.5%
-  const COMMISSION_RATE = 0.10; // 10%
+  const COMMISSION_RATE = 0.1; // 10%
 
   const rentalId = searchParams.get("id");
 
@@ -61,7 +61,7 @@ export default function ReserveRental() {
       const selectedDateTime = new Date(`${pickupDate}T${pickupTime}`);
       const availableFromDate = new Date(rental.availableFrom);
       const availableToDate = new Date(rental.availableTo);
-  
+
       if (
         selectedDateTime < availableFromDate ||
         selectedDateTime > availableToDate
@@ -71,27 +71,31 @@ export default function ReserveRental() {
         );
         return;
       }
-  
+
       let calculatedBasePrice = parseFloat(rental.rentalPrice) || 0;
       let insurance = parseFloat(insuranceAmount) || 0;
       let fuel = parseFloat(fuelAmount) || 0;
-  
+
       // Calculate discount
       let discount = 0;
       if (rental.discount_percentage) {
-        discount = (calculatedBasePrice + insurance + fuel) * (parseFloat(rental.discount_percentage) / 100);
+        discount =
+          (calculatedBasePrice + insurance + fuel) *
+          (parseFloat(rental.discount_percentage) / 100);
       }
-  
+
       // Price with discount
-      const priceWithDiscount = calculatedBasePrice + insurance + fuel - discount;
-  
+      const priceWithDiscount =
+        calculatedBasePrice + insurance + fuel - discount;
+
       // Calculate VAT and commission
       const calculatedVat = priceWithDiscount * 0.075; // 7.5% VAT
       const calculatedCommission = priceWithDiscount * 0.1; // 10% commission
-  
+
       // Final price with VAT and commission
-      const finalPrice = priceWithDiscount + calculatedVat + calculatedCommission;
-  
+      const finalPrice =
+        priceWithDiscount + calculatedVat + calculatedCommission;
+
       // Update state with calculated values
       setBasePrice(calculatedBasePrice);
       setDiscountAmount(discount);
@@ -100,7 +104,7 @@ export default function ReserveRental() {
       setTotalPrice(finalPrice);
     }
   }, [rental, pickupDate, pickupTime, withDriver, insuranceAmount, fuelAmount]);
-  
+
   const handlePayment = () => {
     if (!user) {
       toast.error("Please create an account or sign in to continue.");
@@ -175,7 +179,6 @@ export default function ReserveRental() {
       );
     }
   };
-
   return (
     <>
       <div className="shade_2 df">
@@ -199,7 +202,6 @@ export default function ReserveRental() {
           <img src="/assets/bg (3).png" alt="Shade Item 4" />
         </div>
       </div>
-
       <section className="majestic mml">
         <div className="col_3">
           {rental && (
@@ -284,7 +286,6 @@ export default function ReserveRental() {
               </div>
             </div>
           )}
-
           <div className="info_row">
             <div className="l54">
               <div>
@@ -368,39 +369,38 @@ export default function ReserveRental() {
                 </p>
               </div>
             </div>
-
             <br />
             <h2>Your price summary</h2>
             <br />
             <div className="l02">
-            <div className="l02_1">
-    <div>Base Price</div>
-    <div>NGN {basePrice.toLocaleString()}</div>
-  </div>
-  <div className="l02_1">
-    <div>Discount</div>
-    <div>NGN {(discountAmount || 0).toLocaleString()}</div>
-  </div>
-  {insuranceAmount > 0 && (
-    <div className="l02_1">
-      <div>Insurance</div>
-      <div>NGN {(insuranceAmount || 0).toLocaleString()}</div>
-    </div>
-  )}
-  {fuelAmount > 0 && (
-    <div className="l02_1">
-      <div>Fuel</div>
-      <div>NGN {(fuelAmount || 0).toLocaleString()}</div>
-    </div>
-  )}
-  <div className="l02_1">
-    <div>VAT (7.5%)</div>
-    <div>NGN {vat.toLocaleString()}</div>
-  </div>
-  <div className="l02_1">
-    <div>Commission (10%)</div>
-    <div>NGN {commission.toLocaleString()}</div>
-  </div>
+              <div className="l02_1">
+                <div>Base Price</div>
+                <div>NGN {basePrice.toLocaleString()}</div>
+              </div>
+              <div className="l02_1">
+                <div>Discount</div>
+                <div>NGN {(discountAmount || 0).toLocaleString()}</div>
+              </div>
+              {insuranceAmount > 0 && (
+                <div className="l02_1">
+                  <div>Insurance</div>
+                  <div>NGN {(insuranceAmount || 0).toLocaleString()}</div>
+                </div>
+              )}
+              {fuelAmount > 0 && (
+                <div className="l02_1">
+                  <div>Fuel</div>
+                  <div>NGN {(fuelAmount || 0).toLocaleString()}</div>
+                </div>
+              )}
+              <div className="l02_1">
+                <div>VAT (7.5%)</div>
+                <div>NGN {vat.toLocaleString()}</div>
+              </div>
+              <div className="l02_1">
+                <div>Commission (10%)</div>
+                <div>NGN {commission.toLocaleString()}</div>
+              </div>
             </div>
             <h2>Total</h2>
             <br />
