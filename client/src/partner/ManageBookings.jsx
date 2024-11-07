@@ -62,17 +62,23 @@ export default function ManageBookings() {
           label: "Yes",
           onClick: async () => {
             try {
-              await axios.put(`/updatebookingstatus`, { bookingId, status: newStatus, type: bookingtype });
+              await axios.put(`/updatebookingstatus`, {
+                bookingId,
+                status: newStatus,
+                type: bookingtype,
+              });
               setBookings((prevBookings) =>
                 prevBookings.map((booking) =>
-                  booking._id === bookingId ? { ...booking, status: newStatus } : booking
+                  booking._id === bookingId
+                    ? { ...booking, status: newStatus }
+                    : booking
                 )
               );
-              toast.success("Status changed")
+              toast.success("Status changed");
             } catch (error) {
               console.error("Error updating booking status", error);
             }
-          }
+          },
         },
         {
           label: "No",
@@ -84,8 +90,8 @@ export default function ManageBookings() {
             );
           },
           className: "noButtonStyle",
-        }
-      ]
+        },
+      ],
     });
   };
   return (
@@ -155,8 +161,14 @@ export default function ManageBookings() {
                     </div>
                     <br />
                     <div className="row_item_2">
-                      <div>Check-in: {booking.checkInDate}</div>
-                      <div>Check-in: {booking.checkOutDate}</div>
+                      <div>
+                        Check-in:{" "}
+                        {new Date(booking.checkInDate).toLocaleDateString()}
+                      </div>
+                      <div>
+                        Check-out:{" "}
+                        {new Date(booking.checkOutDate).toLocaleDateString()}
+                      </div>
                     </div>
                     <br />
                     <div className="row_item_2">
@@ -175,6 +187,7 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
                     <div className="row_item_2">
+                      <div className="">Switch booking status</div>
                       <select
                         className="select"
                         value={booking.status}
@@ -186,11 +199,13 @@ export default function ManageBookings() {
                           )
                         }
                       >
+                        <option value="pending">pending</option>
                         <option value="confirmed">confirmed</option>
                         <option value="reserved">reserved</option>
+                        <option value="checkedin">checkedin</option>
                         <option value="ended">ended</option>
+                        <option value="cancelled">cancelled</option>
                       </select>
-                      <div className="left_20">Switch booking status</div>
                     </div>
                     <div className="line"></div>
                   </div>
@@ -213,7 +228,10 @@ export default function ManageBookings() {
                     </div>
                     <br />
                     <div className="row_item_2">
-                      <div>Pickup date: {booking.pickupDate}</div>
+                      <div>
+                        Pickup date:{" "}
+                        {new Date(booking.pickupDate).toLocaleDateString()}
+                      </div>
                       <div>Pickup time: {booking.pickupTime}</div>
                     </div>
                     <br />
@@ -237,6 +255,7 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
                     <div className="row_item_2">
+                      <div className="">Switch booking status</div>
                       <select
                         className="select"
                         value={booking.status}
@@ -248,11 +267,13 @@ export default function ManageBookings() {
                           )
                         }
                       >
+                        <option value="pending">pending</option>
                         <option value="confirmed">confirmed</option>
                         <option value="reserved">reserved</option>
+                        <option value="checkedin">checkedin</option>
                         <option value="ended">ended</option>
+                        <option value="cancelled">cancelled</option>
                       </select>
-                      <div className="left_20">Switch booking status</div>
                     </div>
                     <div className="line"></div>
                   </div>
@@ -275,8 +296,14 @@ export default function ManageBookings() {
                     </div>
                     <br />
                     <div className="row_item_2">
-                      <div>Check-in: {booking.checkInDate}</div>
-                      <div>Check-in: {booking.checkOutDate}</div>
+                      <div>
+                        Check-in:{" "}
+                        {new Date(booking.checkInDate).toLocaleDateString()}
+                      </div>
+                      <div>
+                        Check-out:{" "}
+                        {new Date(booking.checkOutDate).toLocaleDateString()}
+                      </div>
                     </div>
                     <br />
                     <div className="row_item_2">
@@ -290,6 +317,7 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
                     <div className="row_item_2">
+                      <div className="">Switch booking status</div>
                       <select
                         className="select"
                         value={booking.status}
@@ -301,11 +329,13 @@ export default function ManageBookings() {
                           )
                         }
                       >
+                        <option value="pending">pending</option>
                         <option value="confirmed">confirmed</option>
                         <option value="reserved">reserved</option>
+                        <option value="checkedin">checkedin</option>
                         <option value="ended">ended</option>
+                        <option value="cancelled">cancelled</option>
                       </select>
-                      <div className="left_20">Switch booking status</div>
                     </div>
                     <div className="line"></div>
                   </div>
@@ -328,8 +358,11 @@ export default function ManageBookings() {
                     </div>
                     <br />
                     <div className="row_item_2">
-                      <div>Arrival date: {booking.arrivalDate}</div>
-                      <div>Arrival time: {booking.arrivaltTime}</div>
+                      <div>
+                        Arrival date:{" "}
+                        {new Date(booking.arrivalDate).toLocaleDateString()}
+                      </div>
+                      <div>Arrival time: {booking.arrivalTime}</div>
                     </div>
                     <br />
                     <div className="row_item_2">
@@ -343,6 +376,7 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
                     <div className="row_item_2">
+                      <div className="">Switch booking status</div>
                       <select
                         className="select"
                         value={booking.status}
@@ -354,11 +388,13 @@ export default function ManageBookings() {
                           )
                         }
                       >
+                        <option value="pending">pending</option>
                         <option value="confirmed">confirmed</option>
                         <option value="reserved">reserved</option>
+                        <option value="checkedin">checkedin</option>
                         <option value="ended">ended</option>
+                        <option value="cancelled">cancelled</option>
                       </select>
-                      <div className="left_20">Switch booking status</div>
                     </div>
                     <div className="line"></div>
                   </div>

@@ -201,8 +201,8 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                    <div>Check-in: {booking.checkInDate}</div>
-                    <div>Check-out: {booking.checkOutDate}</div>
+                  <div>Check-in: {new Date(booking.checkInDate).toLocaleDateString()}</div>
+                    <div>Check-out: {new Date(booking.checkOutDate).toLocaleDateString()}</div>
                   </div>
                   <br />
                   <div className="row_item_2">
@@ -297,8 +297,8 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                    <div>Pickup date: {booking.pickupDate}</div>
-                    <div>Pickup time: {booking.pickupTime}</div>
+                  <div>Pickup date: {new Date(booking.pickupDate).toLocaleDateString()}</div>
+                  <div>Pickup time: {booking.pickupTime}</div>
                   </div>
                   <br />
                   <div className="row_item_2">
@@ -398,8 +398,8 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                    <div>Check-in: {booking.checkInDate}</div>
-                    <div>Check-out: {booking.checkOutDate}</div>
+                  <div>Check-in: {new Date(booking.checkInDate).toLocaleDateString()}</div>
+                  <div>Check-out: {new Date(booking.checkOutDate).toLocaleDateString()}</div>
                   </div>
                   <br />
                   <div className="row_item_2">
@@ -488,8 +488,8 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                    <div>Arrival date: {booking.arrivalDate}</div>
-                    <div>Arrival time: {booking.arrivalTime}</div>
+                  <div>Arrival date: {new Date(booking.arrivalDate).toLocaleDateString()}</div>
+                  <div>Arrival time: {booking.arrivalTime}</div>
                   </div>
                   <br />
                   <div className="row_item_2">

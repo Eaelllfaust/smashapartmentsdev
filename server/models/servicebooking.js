@@ -16,7 +16,7 @@ const serviceBookingSchema = new mongoose.Schema({
     required: true,
   },
   arrivalTime: {
-    type: String,
+    type: Date,
     required: true,
   },
   totalPrice: {
