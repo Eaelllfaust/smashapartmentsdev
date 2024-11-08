@@ -1764,18 +1764,18 @@ const updatebookingstatus = async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    // Update the status
     booking.status = status;
 
-    // Save the updated booking
     await booking.save();
 
-    // If the status is "confirmed", send a confirmatory email to the user
+    if (status === "checkedin") {
+      await sendCheckinNotification(bookingId, type);
+    }
+
     if (status === "confirmed") {
       const user = await User.findById(userId);
       const email = user.email;
 
-      // Get the listing or office details based on the booking type
       let propertyName;
       let securityLevyData;
       if (type === "stay") {
@@ -1796,7 +1796,6 @@ const updatebookingstatus = async (req, res) => {
         propertyName = "Pickup";
       }
 
-      // Send the confirmatory email
       await sendConfirmatoryEmail(
         email,
         booking,
@@ -1817,7 +1816,6 @@ const updatebookingstatus = async (req, res) => {
   }
 };
 
-// New function to send check-in notification to support
 const sendCheckinNotification = async (bookingId, type) => {
   const htmlTemplate = `
   <!DOCTYPE html>

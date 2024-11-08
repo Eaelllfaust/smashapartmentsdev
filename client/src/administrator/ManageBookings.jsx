@@ -201,8 +201,14 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                  <div>Check-in: {new Date(booking.checkInDate).toLocaleDateString()}</div>
-                    <div>Check-out: {new Date(booking.checkOutDate).toLocaleDateString()}</div>
+                    <div>
+                      Check-in:{" "}
+                      {new Date(booking.checkInDate).toLocaleDateString()}
+                    </div>
+                    <div>
+                      Check-out:{" "}
+                      {new Date(booking.checkOutDate).toLocaleDateString()}
+                    </div>
                   </div>
                   <br />
                   <div className="row_item_2">
@@ -256,7 +262,8 @@ export default function ManageBookings() {
                       </div>
                     </div>
                   </div>
-{/* 
+                  
+                  {/* 
                   <div className="row_item_2">
                     <div className="">Switch booking status</div>
                     <select
@@ -276,7 +283,7 @@ export default function ManageBookings() {
                       <option value="ended">ended</option>
                     </select>
                   </div> */}
-                
+
                 </div>
               );
             } else if (booking.type === "rental") {
@@ -297,8 +304,11 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                  <div>Pickup date: {new Date(booking.pickupDate).toLocaleDateString()}</div>
-                  <div>Pickup time: {booking.pickupTime}</div>
+                    <div>
+                      Pickup date:{" "}
+                      {new Date(booking.pickupDate).toLocaleDateString()}
+                    </div>
+                    <div>Pickup time: {booking.pickupTime}</div>
                   </div>
                   <br />
                   <div className="row_item_2">
@@ -377,7 +387,6 @@ export default function ManageBookings() {
                     </select>
                     <div className="">Switch booking status</div>
                   </div> */}
-                  
                 </div>
               );
             } else if (booking.type === "office") {
@@ -398,8 +407,14 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                  <div>Check-in: {new Date(booking.checkInDate).toLocaleDateString()}</div>
-                  <div>Check-out: {new Date(booking.checkOutDate).toLocaleDateString()}</div>
+                    <div>
+                      Check-in:{" "}
+                      {new Date(booking.checkInDate).toLocaleDateString()}
+                    </div>
+                    <div>
+                      Check-out:{" "}
+                      {new Date(booking.checkOutDate).toLocaleDateString()}
+                    </div>
                   </div>
                   <br />
                   <div className="row_item_2">
@@ -488,8 +503,11 @@ export default function ManageBookings() {
                   </div>
                   <br />
                   <div className="row_item_2">
-                  <div>Arrival date: {new Date(booking.arrivalDate).toLocaleDateString()}</div>
-                  <div>Arrival time: {booking.arrivalTime}</div>
+                    <div>
+                      Arrival date:{" "}
+                      {new Date(booking.arrivalDate).toLocaleDateString()}
+                    </div>
+                    <div>Arrival time: {booking.arrivalTime}</div>
                   </div>
                   <br />
                   <div className="row_item_2">
