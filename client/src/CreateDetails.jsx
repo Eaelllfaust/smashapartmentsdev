@@ -36,6 +36,7 @@ export default function CreateDetails() {
           lastName,
           phoneNumber,
           DOB,
+          gID,
           password,
         });
 
@@ -126,7 +127,7 @@ export default function CreateDetails() {
               style={{
                 cursor: "pointer",
                 padding: "10px",
-                backgroundColor: "#007bff",
+                backgroundColor: "#f89820",
                 color: "white",
                 borderRadius: "5px",
                 textAlign: "center",
@@ -138,7 +139,6 @@ export default function CreateDetails() {
               Upload ID
             </div>
 
-            {/* Hidden file input */}
             <input
               id="fileInput"
               type="file"
@@ -146,7 +146,6 @@ export default function CreateDetails() {
               onChange={handleFileChange}
             />
 
-            {/* Display selected file name */}
             {selectedFile && <p>Selected file: {selectedFile.name}</p>}
             <br />
             <label htmlFor="password">Password</label>

@@ -5239,21 +5239,18 @@ const registerUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email
     if (!email) {
       return res.json({
         error: "Email is required",
       });
     }
 
-    // Validate password
     if (!password || password.length < 6) {
       return res.json({
         error: "Password is required and should be at least 6 characters",
       });
     }
 
-    // Check if email already exists
     const exist = await User.findOne({ email });
     if (exist) {
       return res.json({
@@ -5261,13 +5258,10 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Generate 6-digit verification code
     const verificationCode = crypto.randomInt(100000, 999999).toString();
 
-    // Hash the password using the helper function
     const hashedPassword = await hashPassword(password);
 
-    // Create the user with hashed password and verification code
     const user = await User.create({
       email,
       password: hashedPassword,
@@ -5275,10 +5269,7 @@ const registerUser = async (req, res) => {
       code: verificationCode,
     });
 
-    // Send verification email
-    // await sendVerificationEmail(email, verificationCode);
 
-    // Return the created user (without password)
     return res.json({
       message: "Check your email for verification code",
       user: {
@@ -5294,7 +5285,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// Function to send verification email using Mailtrap
+
 const sendVerificationEmail = async (email, code) => {
   const htmlTemplate = `
 <!DOCTYPE html>
