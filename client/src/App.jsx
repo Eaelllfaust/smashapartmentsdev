@@ -99,6 +99,7 @@ import Editstays from "./partner/editstays";
 import Editservice from "./partner/Editservice";
 import Editrental from "./partner/Editrental";
 import Editoffice from "./partner/Editoffice";
+import CreateDetails from "./CreateDetails";
 
 axios.defaults.baseURL = "http://localhost:8000";
 axios.defaults.withCredentials = true;
@@ -119,6 +120,7 @@ function App() {
         <Route path="/signinpartner" element={< SigninPartner/>} />
         <Route path="/signinadmin" element={< SigninAdmin/>} />
         <Route path="/partnerdetails" element={<PartnerDetails />} />
+        <Route path="/createdetails" element={<CreateDetails />} />
         <Route path="/partnerpassword" element={<PartnerPassword />} />
         <Route path="/stays" element={<Stays />} />
         <Route path="/aboutus" element={<About />} />
