@@ -5127,7 +5127,79 @@ const verifyAccount = async (req, res) => {
     user.code = null;
     await user.save();
 
-    return res.status(200).json({ message: "Account verified successfully" });
+    // Sign the JWT token and add 'interface': 'user' to the payload
+    jwt.sign(
+      {
+        email: user.email,
+        id: user._id,
+        first_name: user.first_name,
+        interface: "user", // Add 'interface': 'user' to the JWT payload
+      },
+      process.env.JWT_SECRET,
+      {},
+      async (err, token) => {
+        if (err) throw err;
+
+        // Send login notification email
+        const loginTime = new Date().toLocaleString();
+        await sendLoginEmail(user.email, loginTime);
+
+        return res.status(200).json({ message: "Account verified successfully", token });
+      }
+    );
+  } catch (error) {
+    console.error("Error during account verification:", error);
+    return res
+      .status(500)
+      .json({ error: "Server error, please try again later" });
+  }
+};
+const verifyAccountPartner = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if the user is already verified
+    if (user.is_verified) {
+      return res.status(400).json({ error: "User is already verified" });
+    }
+
+    // Check if the provided code matches the stored code
+    if (user.code !== code) {
+      return res.status(400).json({ error: "Invalid verification code" });
+    }
+
+    // Update user as verified and clear the verification code
+    user.is_verified = true;
+    user.code = null;
+    await user.save();
+
+    // Sign the JWT token and add 'interface': 'user' to the payload
+    jwt.sign(
+      {
+        email: user.email,
+        id: user._id,
+        first_name: user.first_name,
+        interface: "partner", // Add 'interface': 'user' to the JWT payload
+      },
+      process.env.JWT_SECRET,
+      {},
+      async (err, token) => {
+        if (err) throw err;
+
+        // Send login notification email
+        const loginTime = new Date().toLocaleString();
+        await sendLoginEmail(user.email, loginTime);
+
+        return res.status(200).json({ message: "Account verified successfully", token });
+      }
+    );
   } catch (error) {
     console.error("Error during account verification:", error);
     return res
@@ -5234,58 +5306,81 @@ const sendRecoveryEmail = async (email, newPassword) => {
   }
 };
 
-// Register endpoint
+
+
+
 const registerUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, firstName, lastName, phoneNumber, DOB, password, gId } = req.body;
 
-    if (!email) {
-      return res.json({
-        error: "Email is required",
+    // Data validation checks
+    if (!email || !firstName || !lastName || !phoneNumber || !DOB || !password) {
+      return res.status(400).json({
+        error: "All fields are required",
       });
     }
 
-    if (!password || password.length < 6) {
-      return res.json({
-        error: "Password is required and should be at least 6 characters",
+    // Password complexity checks
+    if (password.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters long",
       });
     }
 
     const exist = await User.findOne({ email });
     if (exist) {
-      return res.json({
+      return res.status(400).json({
         error: "Account exists. Sign in as a partner or customer",
       });
     }
 
-    const verificationCode = crypto.randomInt(100000, 999999).toString();
-
     const hashedPassword = await hashPassword(password);
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
 
     const user = await User.create({
       email,
       password: hashedPassword,
+      account_type: 'user',
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: phoneNumber,
+      dob: DOB,
       is_verified: false,
       code: verificationCode,
     });
 
+    // Save the uploaded document to the MediaTag schema
+    if (req.file) {
+      const mediaTag = new MediaTag({
+        listing_id: user._id,
+        media_name: req.file.filename,
+        media_location: req.file.path,
+        size: req.file.size,
+      });
+      await mediaTag.save();
+    }
 
-    return res.json({
+    // Call the external function to send the verification code
+    await sendVerificationEmail(email, verificationCode);
+
+    return res.status(201).json({
       message: "Check your email for verification code",
       user: {
         id: user._id,
         email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phoneNumber: user.phone_number,
+        DOB: user.dob,
       },
     });
   } catch (error) {
     console.error("Error during registration:", error);
-    return res.json({
+    return res.status(500).json({
       error: "Server error, please try again later",
     });
   }
 };
-
-
 const sendVerificationEmail = async (email, code) => {
   const htmlTemplate = `
 <!DOCTYPE html>
@@ -5338,6 +5433,7 @@ const sendVerificationEmail = async (email, code) => {
     text: `Your verification code is: ${code}`,
     html: htmlTemplate,
     category: "Verification",
+    sandbox:true
   };
 
   try {
@@ -5394,6 +5490,7 @@ const sendLoginEmail = async (email, loginTime) => {
     text: `A new login to your account was detected at ${loginTime}. If this wasn't you, please contact support.`,
     html: htmlTemplate,
     category: "Login Notification",
+    sandbox: true
   };
 
   try {
@@ -5454,7 +5551,7 @@ const loginUser = async (req, res) => {
 
         // Send login notification email
         const loginTime = new Date().toLocaleString();
-        // await sendLoginEmail(user.email, loginTime);
+        await sendLoginEmail(user.email, loginTime);
 
         res.cookie("token", token).json(user);
       }
@@ -5516,12 +5613,12 @@ const loginPartner = async (req, res) => {
 
         // Send login notification email
         const loginTime = new Date().toLocaleString();
-        //  try {
-        //   await sendLoginEmail(user.email, loginTime);
-        // } catch (emailError) {
-        //   console.error("Error sending login notification email:", emailError);
-        //
-        //  }
+         try {
+          await sendLoginEmail(user.email, loginTime);
+        } catch (emailError) {
+          console.error("Error sending login notification email:", emailError);
+        
+         }
 
         res.cookie("token", token).json(user);
       }
@@ -5582,7 +5679,7 @@ const loginAdmin = async (req, res) => {
 
         const loginTime = new Date().toLocaleString();
         try {
-          // await sendLoginEmail(user.email, loginTime);
+          await sendLoginEmail(user.email, loginTime);
         } catch (emailError) {
           console.error("Error sending login notification email:", emailError);
         }
@@ -5720,9 +5817,11 @@ const getFullProfile = async (req, res) => {
         account_type: user.account_type,
         first_name: user.first_name,
         last_name: user.last_name,
+        address: user.address,
         contact_email: user.contact_email,
         phone_number: user.phone_number,
         date_joined: user.date_joined,
+        dob: user.dob,
         status: user.status,
         role: user.role,
         interface: decoded.interface,
@@ -5750,12 +5849,13 @@ const updatePartnerDetails = async (req, res) => {
         }
 
         // Update partner details
-        const { first_name, last_name, phone_number, contact_email, address } =
+        const { first_name, last_name, phone_number, contact_email, dob, address } =
           req.body;
         user.first_name = first_name || user.first_name;
         user.last_name = last_name || user.last_name;
         user.phone_number = phone_number || user.phone_number;
         user.contact_email = contact_email || user.contact_email;
+        user.dob = dob || user.dob;
         user.address = address || user.address;
 
         await user.save();
@@ -5767,6 +5867,7 @@ const updatePartnerDetails = async (req, res) => {
           last_name: user.last_name,
           phone_number: user.phone_number,
           contact_email: user.contact_email,
+          dob: user.dob,
           address: user.address,
           interface: "partner",
         });
@@ -5794,20 +5895,21 @@ const updateUserDetails = async (req, res) => {
         }
 
         // Update user details
-        const { first_name, last_name, phone_number } = req.body;
+        const { first_name, last_name, phone_number, dob } = req.body;
         user.first_name = first_name || user.first_name;
         user.last_name = last_name || user.last_name;
         user.phone_number = phone_number || user.phone_number;
+        user.dob = dob || user.dob;
 
         await user.save();
 
-        // Return updated user profile
         res.json({
           email: user.email,
           account_type: user.account_type,
           first_name: user.first_name,
           last_name: user.last_name,
           phone_number: user.phone_number,
+          dob: user.dob,
           interface: "user",
         });
       } catch (error) {
@@ -5917,55 +6019,128 @@ const getPaymentMethod = async (req, res) => {
   }
 };
 
-const createPartner = async (req, res) => {
+// const createPartner = async (req, res) => {
+//   try {
+//     // Extract user details from request body
+//     const { email, firstName, lastName, phoneNumber, password } = req.body;
+
+//     // Check if all required fields are provided
+//     if (!email || !firstName || !lastName || !phoneNumber || !password) {
+//       return res.status(400).json({ error: "All fields are required" });
+//     }
+
+//     // Check if user already exists
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ error: "User already exists" });
+//     }
+
+//     // Generate 6-digit verification code
+//     const verificationCode = crypto.randomInt(100000, 999999).toString();
+
+//     // Hash the password before saving
+//     const hashedPassword = await hashPassword(password);
+
+//     // Create a new user with the provided details
+//     const newUser = new User({
+//       email,
+//       first_name: firstName,
+//       last_name: lastName,
+//       phone_number: phoneNumber,
+//       password: hashedPassword,
+//       account_type: "partner",
+//       role: "partner",
+//       is_verified: false,
+//       code: verificationCode,
+//     });
+
+//     // Save the new user to the database
+//     await newUser.save();
+
+//     // Send verification email
+//     await sendVerificationEmail(email, verificationCode);
+
+//     // Respond with success message
+//     res.status(201).json({ message: "Check your email for verification code" });
+//   } catch (error) {
+//     console.error("Error creating partner account:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
+const createPartner = async(req, res) => {
   try {
-    // Extract user details from request body
-    const { email, firstName, lastName, phoneNumber, password } = req.body;
+    const { email, firstName, lastName, phoneNumber, DOB, password, address } = req.body;
 
-    // Check if all required fields are provided
-    if (!email || !firstName || !lastName || !phoneNumber || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+    // Data validation checks
+    if (!email || !firstName || !lastName || !phoneNumber || !DOB || !password) {
+      return res.status(400).json({
+        error: "All fields are required",
+      });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
+    // Password complexity checks
+    if (password.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters long",
+      });
     }
 
-    // Generate 6-digit verification code
+    const exist = await User.findOne({ email });
+    if (exist) {
+      return res.status(400).json({
+        error: "Account exists. Sign in as a partner or customer",
+      });
+    }
+
+    const hashedPassword = await hashPassword(password);
     const verificationCode = crypto.randomInt(100000, 999999).toString();
 
-    // Hash the password before saving
-    const hashedPassword = await hashPassword(password);
-
-    // Create a new user with the provided details
-    const newUser = new User({
+    const user = await User.create({
       email,
+      password: hashedPassword,
+      account_type: 'partner',
       first_name: firstName,
       last_name: lastName,
       phone_number: phoneNumber,
-      password: hashedPassword,
-      account_type: "partner",
+      dob: DOB,
+      address: address,
       role: "partner",
       is_verified: false,
       code: verificationCode,
     });
 
-    // Save the new user to the database
-    await newUser.save();
+    // Save the uploaded document to the MediaTag schema
+    if (req.file) {
+      const mediaTag = new MediaTag({
+        listing_id: user._id,
+        media_name: req.file.filename,
+        media_location: req.file.path,
+        size: req.file.size,
+      });
+      await mediaTag.save();
+    }
 
-    // Send verification email
     await sendVerificationEmail(email, verificationCode);
 
-    // Respond with success message
-    res.status(201).json({ message: "Check your email for verification code" });
+    return res.status(201).json({
+      message: "Check your email for verification code",
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phoneNumber: user.phone_number,
+        DOB: user.dob,
+      },
+    });
   } catch (error) {
-    console.error("Error creating partner account:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error during registration:", error);
+    return res.status(500).json({
+      error: "Server error, please try again later",
+    });
   }
-};
-
+}
 module.exports = {
   test,
   registerUser,
@@ -6057,6 +6232,7 @@ module.exports = {
   updateOffice,
   updateService,
   approveListing,
+  verifyAccountPartner,
   getReview,
   Review,
 };

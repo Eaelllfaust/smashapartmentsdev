@@ -41,10 +41,6 @@ const userSchema = new Schema({
         type: String,
         trim: true,
     },
-    gId: {
-        type: String,
-        trim: true,
-    },
     address: {
         type: String,
         trim: true,

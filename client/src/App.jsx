@@ -100,6 +100,7 @@ import Editservice from "./partner/Editservice";
 import Editrental from "./partner/Editrental";
 import Editoffice from "./partner/Editoffice";
 import CreateDetails from "./CreateDetails";
+import AuthmeVendor from "./AuthmeVendor";
 
 axios.defaults.baseURL = "http://localhost:8000";
 axios.defaults.withCredentials = true;
@@ -115,6 +116,7 @@ function App() {
         <Route path="/createaccount" element={<CreateAccount />} />
         <Route path="/signin" element={<Signin />} />
         <Route path="/authme" element={<Authme />} />
+        <Route path="/authmevendor" element={<AuthmeVendor />} />
         <Route path="/signin/recovery" element={<Recovery />} />
         <Route path="/signinpartner/recovery" element={<Recovery />} />
         <Route path="/signinpartner" element={< SigninPartner/>} />

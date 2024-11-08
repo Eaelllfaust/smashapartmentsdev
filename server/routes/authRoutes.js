@@ -95,6 +95,7 @@ const {
   Review,
   getReview,
   approveListing,
+  verifyAccountPartner,
 } = require("../controllers/authController");
 
 router.use(
@@ -105,10 +106,11 @@ router.use(
 );
 
 router.get("/", test);
-router.post("/register", registerUser);
+router.post("/register", upload.single("gId"), registerUser);
 router.post("/login", loginUser);
 router.post("/resetpassword", resetPassword);
 router.post("/verifyaccount", verifyAccount);
+router.post("/verifyaccountpartner", verifyAccountPartner);
 router.post("/loginpartner", loginPartner);
 router.post("/loginadmin", loginAdmin);
 router.get("/profile", getFullProfile);
@@ -180,7 +182,7 @@ router.get("/getservicelisting/:id", getServiceListing);
 router.get("/getofficelisting/:id", getOfficeListing);
 router.get("/getrentallisting/:id", getRentalListing);
 router.get("/getpaymentmethod", getPaymentMethod);
-router.post("/createpartner", createPartner);
+router.post("/createpartner",  upload.single("gId"), createPartner);
 router.post('/approveListing', approveListing);
 router.post("/stayslisting", upload.array("images", 15), createStayListing);
 router.put("/stayslisting/:id", upload.array("images", 15), updateListing);

@@ -3103,3 +3103,15 @@ background-color: #ffa230;
 align-items:flex-end;
 justify-content: flex-end;
 }
+.valid{
+  color: green;
+}
+
+li{
+  list-style: none;
+}
+.password-helper{
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #eeeeee;
+}
