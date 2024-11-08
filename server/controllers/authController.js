@@ -374,12 +374,12 @@ const sendRefundPendingEmail = async (email) => {
             <p>We have received your refund appeal for your recent booking cancellation. Your request is currently under review and pending approval from our administration team.</p>
             <p>If approved, 50% of the amount you paid will be refunded to you. We appreciate your patience as we complete the review process and aim to resolve this matter promptly.</p>
             <p>Best regards,</p>
-            <p>The SmashApartment.com Team</p>
+            <p>The smashapartments.com Team</p>
         </main>
         
         <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-            <p>This email is from SmashApartment.com. If you have questions, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-            <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+            <p>This email is from smashapartments.com. If you have questions, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+            <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
             <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
         </footer>
     </body>
@@ -1683,24 +1683,72 @@ const getAllListings = async (req, res) => {
   }
 };
 
+// const updatebookingstatus = async (req, res) => {
+//   const { bookingId, status, type } = req.body;
+
+//   try {
+//     let booking;
+
+//     switch (type) {
+//       case "service":
+//         booking = await ServiceBooking.findById(bookingId);
+//         break;
+//       case "rental":
+//         booking = await Rental.findById(bookingId);
+//         break;
+//       case "cooffice":
+//         booking = await CoofficeBooking.findById(bookingId);
+//         break;
+//       case "stay":
+//         booking = await Booking.findById(bookingId);
+//         break;
+//       default:
+//         return res.status(400).json({ error: "Invalid booking type" });
+//     }
+
+//     if (!booking) {
+//       return res.status(404).json({ error: "Booking not found" });
+//     }
+
+//     // Update the status
+//     booking.status = status;
+
+//     // Save the updated booking
+//     await booking.save();
+
+//     res
+//       .status(200)
+//       .json({ message: "Booking status updated successfully", booking });
+//   } catch (error) {
+//     console.error(error);
+//     res
+//       .status(500)
+//       .json({ error: "An error occurred while updating the booking status" });
+//   }
+// };
 const updatebookingstatus = async (req, res) => {
   const { bookingId, status, type } = req.body;
 
   try {
     let booking;
+    let userId;
 
     switch (type) {
       case "service":
         booking = await ServiceBooking.findById(bookingId);
+        userId = booking.userId;
         break;
       case "rental":
         booking = await Rental.findById(bookingId);
+        userId = booking.userId;
         break;
-      case "cooffice":
+      case "office":
         booking = await CoofficeBooking.findById(bookingId);
+        userId = booking.userId;
         break;
       case "stay":
         booking = await Booking.findById(bookingId);
+        userId = booking.userId;
         break;
       default:
         return res.status(400).json({ error: "Invalid booking type" });
@@ -1716,6 +1764,34 @@ const updatebookingstatus = async (req, res) => {
     // Save the updated booking
     await booking.save();
 
+    // If the status is "confirmed", send a confirmatory email to the user
+    if (status === "confirmed") {
+      const user = await User.findById(userId);
+      const email = user.email;
+
+      // Get the listing or office details based on the booking type
+      let propertyName;
+      let securityLevyData;
+      if (type === "stay") {
+        const stayListing = await StayListing.findById(booking.listingId).lean();
+        propertyName = stayListing.property_name;
+        securityLevyData = stayListing.security_levy;
+      } else if (type === "office") {
+        const officeSpace = await OfficeSpace.findById(booking.officeId).lean();
+        propertyName = officeSpace.office_space_name;
+        securityLevyData = officeSpace.security_levy;
+      } else if (type === "rental") {
+        const rentalItem = await Rental.findById(booking.rentalId).lean();
+        propertyName = "Ride rental"
+      } else if (type === "service") {
+        const serviceItem = await Service.findById(booking.serviceId).lean();
+        propertyName = "Pickup";
+      }
+
+      // Send the confirmatory email
+      await sendConfirmatoryEmail(email, booking, propertyName, securityLevyData, type);
+    }
+
     res
       .status(200)
       .json({ message: "Booking status updated successfully", booking });
@@ -1727,21 +1803,118 @@ const updatebookingstatus = async (req, res) => {
   }
 };
 
+const sendConfirmatoryEmail = async (email, booking, propertyName, securityLevyData, type) => {
+  let subject, titleText;
+  if (type === "rental") {
+    subject = "Your new rental has been confirmed";
+    titleText = "Your new rental has been confirmed";
+  } else if (type === "service") {
+    subject = "Your new pickup has been confirmed";
+    titleText = "Your new pickup has been confirmed";
+  } else {
+    subject = "Your smashapartments.com Booking Confirmation";
+    titleText = "Your Booking at {propertyName} is Confirmed";
+  }
+
+  const htmlTemplate = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  </head>
+  <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+          <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+              <!-- SVG path data here -->
+          </svg>
+      </header>
+      
+      <main style="padding: 20px;">
+          <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">${titleText.replace('{propertyName}', propertyName)}</h1>
+          <p>Hello,</p>
+          <p>We're pleased to inform you that your booking request for ${propertyName} has been confirmed.</p>
+
+          ${
+            (type === "stay" || type === "office") && securityLevyData && securityLevyData !== ''
+              ? `
+          <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
+              <h2 style="color: #ff8c00; margin-top: 0;">Security Levy</h2>
+              <p>Please note that there is a security levy deposit associated with your booking. The terms and conditions for this deposit are as follows:</p>
+              <ul>
+                <li>The security levy is a refundable deposit that will be returned to you at the end of your rental period, provided there are no damages or outstanding fees.</li>
+                <li>The amount of the security levy is ${securityLevyData}.</li>
+                <li>The security levy must be paid prior to the start of your rental period.</li>
+                <li>If there are any damages or outstanding fees, the security levy (or a portion of it) will be used to cover these costs.</li>
+                <li>The security levy will be refunded to you within 14 days of the end of your rental period, provided there are no issues.</li>
+              </ul>
+          </div>
+          `
+              : ''
+          }
+
+          <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+          <p>For any complaints, <a href="mailto:complaints@smashapartments.com" style="color: #ff8c00;">complaints@smashapartments.com</a></p>
+          <p>The smashapartments.com Team</p>
+      </main>
+      
+      <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+          <p>This email is from smashapartments.com regarding your confirmed booking.</p>
+          <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+          <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
+          <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+      </footer>
+  </body>
+  </html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject: subject,
+    html: htmlTemplate,
+    category: "Booking Confirmation",
+    sandbox: true,
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Confirmatory email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending confirmatory email:", error);
+    throw error;
+  }
+};
+
 const getAllBookings = async (req, res) => {
   try {
     const { userId } = req.params;
 
     // Fetch all listings owned by the user
-    const stayListings = await StayListing.find({ owner: userId })
-      .select("_id")
-      .lean();
-    const officeSpaces = await OfficeSpace.find({ owner: userId })
-      .select("_id")
-      .lean();
-    const carRentals = await CarRental.find({ owner: userId })
-      .select("_id")
-      .lean();
-    const services = await Service.find({ owner: userId }).select("_id").lean();
+    const stayListings = await StayListing.find({ owner: userId }).lean();
+    const officeSpaces = await OfficeSpace.find({ owner: userId }).lean();
+    const carRentals = await CarRental.find({ owner: userId }).lean();
+    const services = await Service.find({ owner: userId }).lean();
+
+    // Create maps of listings by their IDs
+    const stayListingMap = stayListings.reduce((acc, listing) => {
+      acc[listing._id] = listing;
+      return acc;
+    }, {});
+    const officeSpaceMap = officeSpaces.reduce((acc, listing) => {
+      acc[listing._id] = listing;
+      return acc;
+    }, {});
+    const carRentalMap = carRentals.reduce((acc, listing) => {
+      acc[listing._id] = listing;
+      return acc;
+    }, {});
+    const serviceMap = services.reduce((acc, listing) => {
+      acc[listing._id] = listing;
+      return acc;
+    }, {});
 
     // Extract listing IDs for each type
     const stayListingIds = stayListings.map((listing) => listing._id);
@@ -1783,37 +1956,42 @@ const getAllBookings = async (req, res) => {
       return acc;
     }, {});
 
-    // Combine all bookings into one array with their type and user info
+    // Combine all bookings into one array with their type, user info, and listing info
     const allBookings = [
       ...stayBookings.map((booking) => ({
         ...booking,
         type: "stay",
         user: userMap[booking.userId],
+        listing: stayListingMap[booking.listingId],
       })),
       ...officeBookings.map((booking) => ({
         ...booking,
         type: "office",
         user: userMap[booking.userId],
+        listing: officeSpaceMap[booking.officeId],
       })),
       ...rentalBookings.map((booking) => ({
         ...booking,
         type: "rental",
         user: userMap[booking.userId],
+        listing: carRentalMap[booking.rentalId],
       })),
       ...serviceBookings.map((booking) => ({
         ...booking,
         type: "service",
         user: userMap[booking.userId],
+        listing: serviceMap[booking.serviceId],
       })),
     ];
 
-    // Respond with all bookings
+    // Respond with all bookings, each with detailed listing information
     res.status(200).json(allBookings);
   } catch (error) {
     console.error("Error fetching bookings:", error);
     res.status(500).json({ error: "Failed to fetch bookings" });
   }
 };
+
 const getAllBookingsGeneral = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -2342,7 +2520,7 @@ const sendNewBookingEmail = async (email, bookingDetails) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your SmashApartment.com Booking Confirmation</title>
+    <title>Your smashapartments.com Booking Confirmation</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2355,7 +2533,7 @@ const sendNewBookingEmail = async (email, bookingDetails) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking Awaiting Confirmation</h1>
         <p>Hello,</p>
-        <p>Thank you for choosing SmashApartment.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
+        <p>Thank you for choosing smashapartments.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
         
         <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
             <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
@@ -2373,13 +2551,13 @@ const sendNewBookingEmail = async (email, bookingDetails) => {
         </ul>
 
         <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2389,7 +2567,7 @@ const sendNewBookingEmail = async (email, bookingDetails) => {
   const mailOptions = {
     from: sender,
     to: [email],
-    subject: "Your SmashApartment.com Booking Request",
+    subject: "Your smashapartments.com Booking Request",
     text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
     html: htmlTemplate,
     category: "Booking Confirmation",
@@ -2415,7 +2593,7 @@ const sendNewBookingEmailOffice = async (email, bookingDetails) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your SmashApartment.com Booking Confirmation</title>
+    <title>Your smashapartments.com Booking Confirmation</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2428,7 +2606,7 @@ const sendNewBookingEmailOffice = async (email, bookingDetails) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking Awaiting Confirmation</h1>
         <p>Hello,</p>
-        <p>Thank you for choosing SmashApartment.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
+        <p>Thank you for choosing smashapartments.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
         
         <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
             <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
@@ -2446,13 +2624,13 @@ const sendNewBookingEmailOffice = async (email, bookingDetails) => {
         </ul>
 
         <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2462,7 +2640,7 @@ const sendNewBookingEmailOffice = async (email, bookingDetails) => {
   const mailOptions = {
     from: sender,
     to: [email],
-    subject: "Your SmashApartment.com Booking Request",
+    subject: "Your smashapartments.com Booking Request",
     text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
     html: htmlTemplate,
     category: "Booking Confirmation",
@@ -2487,7 +2665,7 @@ const sendNewBookingEmailPickup = async (email, bookingDetails) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your SmashApartment.com Booking Confirmation</title>
+    <title>Your smashapartments.com Booking Confirmation</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2500,7 +2678,7 @@ const sendNewBookingEmailPickup = async (email, bookingDetails) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking Awaiting Confirmation</h1>
         <p>Hello,</p>
-        <p>Thank you for choosing SmashApartment.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
+        <p>Thank you for choosing smashapartments.com! Your booking request for <strong>${propertyName}</strong> has been received and is currently awaiting confirmation.</p>
         
         <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
             <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
@@ -2517,13 +2695,13 @@ const sendNewBookingEmailPickup = async (email, bookingDetails) => {
         </ul>
 
         <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2533,7 +2711,7 @@ const sendNewBookingEmailPickup = async (email, bookingDetails) => {
   const mailOptions = {
     from: sender,
     to: [email],
-    subject: "Your SmashApartment.com Booking Request",
+    subject: "Your smashapartments.com Booking Request",
     text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
     html: htmlTemplate,
     category: "Booking Confirmation",
@@ -2557,7 +2735,7 @@ const sendNewBookingEmailRental = async (email, bookingDetails) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your SmashApartment.com Booking Confirmation</title>
+    <title>Your smashapartments.com Booking Confirmation</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2570,7 +2748,7 @@ const sendNewBookingEmailRental = async (email, bookingDetails) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Rental Awaiting Confirmation</h1>
         <p>Hello,</p>
-        <p>Thank you for choosing SmashApartment.com! Your rental request has been received and is currently awaiting confirmation.</p>
+        <p>Thank you for choosing smashapartments.com! Your rental request has been received and is currently awaiting confirmation.</p>
         
         <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
             <h2 style="color: #ff8c00; margin-top: 0;">Booking Details</h2>
@@ -2589,13 +2767,13 @@ const sendNewBookingEmailRental = async (email, bookingDetails) => {
         </ul>
 
         <p>If you have any questions about your booking, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding your recent booking request.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding your recent booking request.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2605,7 +2783,7 @@ const sendNewBookingEmailRental = async (email, bookingDetails) => {
   const mailOptions = {
     from: sender,
     to: [email],
-    subject: "Your SmashApartment.com Rental Request",
+    subject: "Your smashapartments.com Rental Request",
     text: `Thank you for your rental request. Your booking is awaiting confirmation.`,
     html: htmlTemplate,
     category: "Booking Confirmation",
@@ -2636,7 +2814,7 @@ const sendNewBookingNotificationToOwner = async (listingId) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Booking for Your Property on SmashApartment.com</title>
+    <title>New Booking for Your Property on smashapartments.com</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2649,16 +2827,16 @@ const sendNewBookingNotificationToOwner = async (listingId) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Property</h1>
         <p>Hello, ${ownerName}</p>
-        <p>You have received a new booking request for your property <strong>${propertyName}</strong> on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+        <p>You have received a new booking request for your property <strong>${propertyName}</strong> on smashapartments.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
 
         <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2668,7 +2846,7 @@ const sendNewBookingNotificationToOwner = async (listingId) => {
   const mailOptions = {
     from: sender,
     to: [ownerEmail],
-    subject: "New Booking for Your Property on SmashApartment.com",
+    subject: "New Booking for Your Property on smashapartments.com",
     text: `You have received a new booking request for your property "${propertyName}". Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
@@ -2699,7 +2877,7 @@ const sendNewBookingNotificationToOwnerOffice = async (officeId) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Booking for Your Property on SmashApartment.com</title>
+    <title>New Booking for Your Property on smashapartments.com</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2712,16 +2890,16 @@ const sendNewBookingNotificationToOwnerOffice = async (officeId) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Property</h1>
         <p>Hello, ${ownerName}</p>
-        <p>You have received a new booking request for your property <strong>${propertyName}</strong> on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+        <p>You have received a new booking request for your property <strong>${propertyName}</strong> on smashapartments.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
 
         <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2731,7 +2909,7 @@ const sendNewBookingNotificationToOwnerOffice = async (officeId) => {
   const mailOptions = {
     from: sender,
     to: [ownerEmail],
-    subject: "New Booking for Your Property on SmashApartment.com",
+    subject: "New Booking for Your Property on smashapartments.com",
     text: `You have received a new booking request for your property "${propertyName}". Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
@@ -2761,7 +2939,7 @@ const sendNewBookingNotificationToOwnerPickup = async (serviceId) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Booking for Your Property on SmashApartment.com</title>
+    <title>New Booking for Your Property on smashapartments.com</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2774,16 +2952,16 @@ const sendNewBookingNotificationToOwnerPickup = async (serviceId) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Property</h1>
         <p>Hello, ${ownerName}</p>
-        <p>You have received a new booking request for a pickup on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+        <p>You have received a new booking request for a pickup on smashapartments.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
 
         <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2793,7 +2971,7 @@ const sendNewBookingNotificationToOwnerPickup = async (serviceId) => {
   const mailOptions = {
     from: sender,
     to: [ownerEmail],
-    subject: "New Booking for Your Service on SmashApartment.com",
+    subject: "New Booking for Your Service on smashapartments.com",
     text: `You have received a new booking request for your service. Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
@@ -2822,7 +3000,7 @@ const sendNewBookingNotificationToOwnerRental = async (rentalId) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Booking for Your Property on SmashApartment.com</title>
+    <title>New Booking for Your Property on smashapartments.com</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -2835,16 +3013,16 @@ const sendNewBookingNotificationToOwnerRental = async (rentalId) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">New Booking for Your Rental</h1>
         <p>Hello, ${ownerName}</p>
-        <p>You have received a new booking request for a rental on SmashApartment.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
+        <p>You have received a new booking request for a rental on smashapartments.com. Please log in to your account to review and confirm this booking as soon as possible.</p>
 
         <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com regarding a new booking for your property.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com regarding a new booking for your property.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -2854,7 +3032,7 @@ const sendNewBookingNotificationToOwnerRental = async (rentalId) => {
   const mailOptions = {
     from: sender,
     to: [ownerEmail],
-    subject: "New Booking for Your Rental on SmashApartment.com",
+    subject: "New Booking for Your Rental on smashapartments.com",
     text: `You have received a new booking request for a rental. Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
@@ -3280,6 +3458,118 @@ const getListingData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch listing data" });
   }
 };
+const approveListing = async (req, res) => {
+  const { listingId, type } = req.body;
+
+  try {
+    let listing;
+
+    switch (type) {
+      case "stay":
+        listing = await StayListing.findById(listingId);
+        break;
+      case "rental":
+        listing = await CarRental.findById(listingId);
+        break;
+      case "office":
+        listing = await OfficeSpace.findById(listingId);
+        break;
+      case "service":
+        listing = await Service.findById(listingId);
+        break;
+      default:
+        return res.status(400).json({ error: "Invalid listing type" });
+    }
+
+    if (!listing) return res.status(404).json({ error: "Listing not found" });
+
+    listing.approved = true;
+    await listing.save();
+
+    // Get the owner's email
+    const owner = await User.findById(listing.owner);
+    const ownerEmail = owner.email;
+
+    // Send the approved email to the owner
+    await sendApprovedEmail(ownerEmail, listing, type);
+
+    res.status(200).json({ message: "Listing approved successfully", listing });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while approving the listing" });
+  }
+};
+
+const sendApprovedEmail = async (email, listing, type) => {
+  let propertyName;
+  switch (type) {
+    case "stay":
+      propertyName = listing.property_name;
+      break;
+    case "rental":
+      propertyName = listing.carNameModel;
+      break;
+    case "office":
+      propertyName = listing.office_space_name;
+      break;
+    case "service":
+      propertyName = listing.serviceName;
+      break;
+  }
+
+  const htmlTemplate = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Your Listing on smashapartments.com has been Approved</title>
+      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  </head>
+  <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+          <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+              <!-- SVG path data here -->
+          </svg>
+      </header>
+      
+      <main style="padding: 20px;">
+          <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">Your Listing on smashapartments.com has been Approved</h1>
+          <p>Hello,</p>
+          <p>We're pleased to inform you that your listing for "${propertyName}" has been approved by the smashapartments.com team.</p>
+          
+          <p>Your listing is now live and available for customers to book. If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+          <p>The smashapartments.com Team</p>
+      </main>
+      
+      <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+          <p>This email is from smashapartments.com regarding the approval of your listing.</p>
+          <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+          <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
+          <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+      </footer>
+  </body>
+  </html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject: "Your Listing on smashapartments.com has been Approved",
+    html: htmlTemplate,
+    category: "Listing Approval",
+    sandbox: true,
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Approved email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending approved email:", error);
+    throw error;
+  }
+};
+
 const getCooffices = async (req, res) => {
   try {
     const {
@@ -4824,7 +5114,7 @@ const sendRecoveryEmail = async (email, newPassword) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your SmashApartment.com Password Reset</title>
+    <title>Your smashapartments.com Password Reset</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -4837,17 +5127,17 @@ const sendRecoveryEmail = async (email, newPassword) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">Password Reset</h1>
         <p>Hello,</p>
-        <p>Your password for SmashApartment.com has been reset. Your new password is:</p>
+        <p>Your password for smashapartments.com has been reset. Your new password is:</p>
         <p style="font-size: 24px; font-weight: 700; color: #ff8c00; text-align: center;">${newPassword}</p>
         <p>Please log in with this password and change it immediately for security reasons.</p>
         <p>If you didn't request this password reset, please contact our support team immediately.</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com. If you are receiving this email, it means that a password reset was requested for your account.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com. If you are receiving this email, it means that a password reset was requested for your account.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -4857,7 +5147,7 @@ const sendRecoveryEmail = async (email, newPassword) => {
   const mailOptions = {
     from: sender,
     to: [email],
-    subject: "Your SmashApartment.com Password Has Been Reset",
+    subject: "Your smashapartments.com Password Has Been Reset",
     text: `Your new password is: ${newPassword}`,
     html: htmlTemplate,
     category: "Password Reset",
@@ -4940,7 +5230,7 @@ const sendVerificationEmail = async (email, code) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your SmashApartment.com Account Creation Code</title>
+    <title>Your smashapartments.com Account Creation Code</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -4961,17 +5251,17 @@ const sendVerificationEmail = async (email, code) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">Verification OTP</h1>
         <p>Hello,</p>
-        <p>Thank you for creating an account with SmashApartment.com. To complete your registration, please use the following code:</p>
+        <p>Thank you for creating an account with smashapartments.com. To complete your registration, please use the following code:</p>
         <p style="font-size: 24px; font-weight: 700; color: #ff8c00; text-align: center;">${code}</p>
         <p>If you didn't request this code, please ignore this email.</p>
         <p>Happy booking!</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This email is from SmashApartment.com. If you are receiving this email, it means that you or someone else used this email address to create an account with us.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This email is from smashapartments.com. If you are receiving this email, it means that you or someone else used this email address to create an account with us.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -4981,7 +5271,7 @@ const sendVerificationEmail = async (email, code) => {
   const mailOptions = {
     from: sender,
     to: [email],
-    subject: "Verify Your SmashApartment.com Account",
+    subject: "Verify Your smashapartments.com Account",
     text: `Your verification code is: ${code}`,
     html: htmlTemplate,
     category: "Verification",
@@ -5003,7 +5293,7 @@ const sendLoginEmail = async (email, loginTime) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Notification - SmashApartment.com</title>
+    <title>Login Notification - smashapartments.com</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -5016,18 +5306,18 @@ const sendLoginEmail = async (email, loginTime) => {
     <main style="padding: 20px;">
         <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">Login Notification</h1>
         <p>Hello,</p>
-        <p>We detected a new sign-in to your SmashApartment.com account.</p>
+        <p>We detected a new sign-in to your smashapartments.com account.</p>
         <p>Time of login: <strong>${loginTime}</strong></p>
         <p>If this was you, no further action is needed. If you didn't sign in to your account at this time, please contact our support team immediately.</p>
-        <p>Thank you for using SmashApartment.com!</p>
+        <p>Thank you for using smashapartments.com!</p>
         <p>Best regards,</p>
-        <p>The SmashApartment.com Team</p>
+        <p>The smashapartments.com Team</p>
     </main>
     
     <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-        <p>This is an automated message from SmashApartment.com. Please do not reply to this email.</p>
-        <p>For support, please contact us at: <a href="mailto:support@smashapartment.com" style="color: #ff8c00;">support@smashapartment.com</a></p>
-        <p>&copy; 2024 SmashApartment.com. All rights reserved.</p>
+        <p>This is an automated message from smashapartments.com. Please do not reply to this email.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
         <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
     </footer>
 </body>
@@ -5037,7 +5327,7 @@ const sendLoginEmail = async (email, loginTime) => {
   const mailOptions = {
     from: sender,
     to: [email],
-    subject: "New Login to Your SmashApartment.com Account",
+    subject: "New Login to Your smashapartments.com Account",
     text: `A new login to your account was detected at ${loginTime}. If this wasn't you, please contact support.`,
     html: htmlTemplate,
     category: "Login Notification",
@@ -5703,6 +5993,7 @@ module.exports = {
   updateRental,
   updateOffice,
   updateService,
+  approveListing,
   getReview,
   Review,
 };

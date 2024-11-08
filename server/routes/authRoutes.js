@@ -94,6 +94,7 @@ const {
   updateOffice,
   Review,
   getReview,
+  approveListing,
 } = require("../controllers/authController");
 
 router.use(
@@ -180,6 +181,7 @@ router.get("/getofficelisting/:id", getOfficeListing);
 router.get("/getrentallisting/:id", getRentalListing);
 router.get("/getpaymentmethod", getPaymentMethod);
 router.post("/createpartner", createPartner);
+router.post('/approveListing', approveListing);
 router.post("/stayslisting", upload.array("images", 15), createStayListing);
 router.put("/stayslisting/:id", upload.array("images", 15), updateListing);
 router.post("/coofficelisting", upload.array("images", 15), createOfficeListing);

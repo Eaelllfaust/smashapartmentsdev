@@ -6,10 +6,14 @@ import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import axios from "axios"; // Import axios
 import { toast } from "react-toastify";
+import ListingDetailsModal from "./ListingDetailsModal";
+
 export default function ManageBookings() {
   const { user, loading } = useContext(UserContext); // Get the user and loading state from context
   const navigate = useNavigate();
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [listingData, setListingData] = useState([]);
+  const [listingType, setListingType] = useState("");
   const [upcomingBookings, setUpcomingBookings] = useState(0);
   const [pastBookings, setPastBookings] = useState(0);
   const [bookings, setBookings] = useState([]);
@@ -186,6 +190,20 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.email}</div>
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
+                    <br />
+                    <div className="row_item_2">
+                   
+                    <div
+                      className="btn_22"
+                      onClick={() => {
+                        setListingData(booking.listing);
+                        setIsModalOpen(true);
+                        setListingType("stay");
+                      }}
+                    >
+                      View listing information
+                    </div>
+                  </div>
                     <div className="row_item_2">
                       <div className="">Switch booking status</div>
                       <select
@@ -254,6 +272,20 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.email}</div>
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
+                    <br />
+                    {booking.listing &&
+                    Object.keys(booking.listing).length > 0 && (
+                      <div
+                        className="btn_22"
+                        onClick={() => {
+                          setListingData(booking.listing);
+                          setIsModalOpen(true);
+                          setListingType("rental");
+                        }}
+                      >
+                        View listing information
+                      </div>
+                    )}
                     <div className="row_item_2">
                       <div className="">Switch booking status</div>
                       <select
@@ -316,6 +348,20 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.email}</div>
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
+                    <br />
+                    {booking.listing &&
+                    Object.keys(booking.listing).length > 0 && (
+                      <div
+                        className="btn_22"
+                        onClick={() => {
+                          setListingData(booking.listing);
+                          setIsModalOpen(true);
+                          setListingType("office");
+                        }}
+                      >
+                        View listing information
+                      </div>
+                    )}
                     <div className="row_item_2">
                       <div className="">Switch booking status</div>
                       <select
@@ -375,6 +421,20 @@ export default function ManageBookings() {
                       <div>Contact: {booking.user.email}</div>
                       <div>Contact: {booking.user.phone_number}</div>
                     </div>
+                    <br />
+                  {booking.listing &&
+                    Object.keys(booking.listing).length > 0 && (
+                      <div
+                        className="btn_22"
+                        onClick={() => {
+                          setListingData(booking.listing);
+                          setIsModalOpen(true);
+                          setListingType("service");
+                        }}
+                      >
+                        View listing information
+                      </div>
+                    )}
                     <div className="row_item_2">
                       <div className="">Switch booking status</div>
                       <select
@@ -402,12 +462,22 @@ export default function ManageBookings() {
               } else {
                 return null;
               }
+              
             })
           ) : (
             <p>No bookings found.</p>
           )}
+
         </div>
+        
       </section>
+      <ListingDetailsModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          listing={listingData}
+          type={listingType}
+        />
     </>
+    
   );
 }

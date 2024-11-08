@@ -1480,6 +1480,7 @@ display: block;
   background: #f0f0f0;
   border: none;
   display: flex;
+  cursor: pointer;
   text-align: center;
   align-items: center;
   justify-content: center;
@@ -3071,4 +3072,12 @@ background-color: #ffa230;
   height: 100px;
   margin: 5px;
   border-radius: 10px;
+}
+.approved{
+  background-color: limegreen;
+  color: #fff;
+}
+.bx-check{
+  font-size: 1.2rem;
+  margin-left:5px;
 }

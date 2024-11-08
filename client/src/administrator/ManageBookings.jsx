@@ -233,7 +233,7 @@ export default function ManageBookings() {
                   <br />
                   <div className="row_item_2">
                     <div
-                      className="btn_22"
+                      className="button"
                       onClick={() => {
                         setListingData(booking.listing);
                         setIsModalOpen(true);
@@ -256,9 +256,9 @@ export default function ManageBookings() {
                       </div>
                     </div>
                   </div>
-
+{/* 
                   <div className="row_item_2">
-                    <div className="left_20">Switch booking status</div>
+                    <div className="">Switch booking status</div>
                     <select
                       className="select"
                       value={booking.status}
@@ -275,8 +275,8 @@ export default function ManageBookings() {
                       <option value="reserved">reserved</option>
                       <option value="ended">ended</option>
                     </select>
-                  </div>
-                  <div className="line"></div>
+                  </div> */}
+                
                 </div>
               );
             } else if (booking.type === "rental") {
@@ -358,7 +358,7 @@ export default function ManageBookings() {
                       </div>
                     </div>
                   </div>
-                  <div className="row_item_2">
+                  {/* <div className="row_item_2">
                     <select
                       className="select"
                       value={booking.status}
@@ -375,9 +375,9 @@ export default function ManageBookings() {
                       <option value="reserved">reserved</option>
                       <option value="ended">ended</option>
                     </select>
-                    <div className="left_20">Switch booking status</div>
-                  </div>
-                  <div className="line"></div>
+                    <div className="">Switch booking status</div>
+                  </div> */}
+                  
                 </div>
               );
             } else if (booking.type === "office") {
@@ -448,7 +448,7 @@ export default function ManageBookings() {
                       </div>
                     </div>
                   </div>
-                  <div className="row_item_2">
+                  {/* <div className="row_item_2">
                     <select
                       className="select"
                       value={booking.status}
@@ -465,8 +465,8 @@ export default function ManageBookings() {
                       <option value="reserved">reserved</option>
                       <option value="ended">ended</option>
                     </select>
-                    <div className="left_20">Switch booking status</div>
-                  </div>
+                    <div className="">Switch booking status</div>
+                  </div> */}
                   <div className="line"></div>
                 </div>
               );
@@ -538,7 +538,7 @@ export default function ManageBookings() {
                       </div>
                     </div>
                   </div>
-                  <div className="row_item_2">
+                  {/* <div className="row_item_2">
                     <select
                       className="select"
                       value={booking.status}
@@ -555,8 +555,8 @@ export default function ManageBookings() {
                       <option value="reserved">reserved</option>
                       <option value="ended">ended</option>
                     </select>
-                    <div className="left_20">Switch booking status</div>
-                  </div>
+                    <div className="">Switch booking status</div>
+                  </div> */}
                   <div className="line"></div>
                 </div>
               );

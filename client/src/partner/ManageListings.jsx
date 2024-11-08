@@ -143,6 +143,18 @@ export default function ManageListings() {
                 <div>{listing.city}</div>
                 <div>{listing.type}</div>
                 <div>NGN {listing.price_per_night.toLocaleString()}</div>
+                <span
+                  className={`select appr ${
+                    listing.approved ? "approved" : ""
+                  }`}
+                  onClick={
+                    !listing.approved
+                      ? () => handleApprove(listing.type, listing._id)
+                      : undefined
+                  }
+                >
+                  {listing.approved ? "Approved" : "Awaiting approval"}
+                </span>
                 <select
                   className="select"
                   onChange={(event) =>
@@ -167,6 +179,18 @@ export default function ManageListings() {
                 <div>{listing.carType}</div>
                 <div>{listing.type}</div>
                 <div>NGN {listing.rentalPrice.toLocaleString()}</div>
+                <span
+                  className={`select appr ${
+                    listing.approved ? "approved" : ""
+                  }`}
+                  onClick={
+                    !listing.approved
+                      ? () => handleApprove(listing.type, listing._id)
+                      : undefined
+                  }
+                >
+                  {listing.approved ? "Approved" : "Awaiting approval"}
+                </span>
                 <select
                   className="select"
                   onChange={(event) =>
@@ -191,6 +215,18 @@ export default function ManageListings() {
                 <div>{listing.city}</div>
                 <div>{listing.type}</div>
                 <div>NGN {listing.price_per_day.toLocaleString()}</div>
+                <span
+                  className={`select appr ${
+                    listing.approved ? "approved" : ""
+                  }`}
+                  onClick={
+                    !listing.approved
+                      ? () => handleApprove(listing.type, listing._id)
+                      : undefined
+                  }
+                >
+                  {listing.approved ? "Approved" : "Awaiting approval"}
+                </span>
                 <select
                   className="select"
                   onChange={(event) =>
@@ -215,6 +251,18 @@ export default function ManageListings() {
                 <div>{listing.carMakeModel}</div>
                 <div>{listing.type}</div>
                 <div>NGN {listing.pickupPrice.toLocaleString()}</div>
+                <span
+                  className={`select appr ${
+                    listing.approved ? "approved" : ""
+                  }`}
+                  onClick={
+                    !listing.approved
+                      ? () => handleApprove(listing.type, listing._id)
+                      : undefined
+                  }
+                >
+                  {listing.approved ? "Approved" : "Awaiting approval"}
+                </span>
                 <select
                   className="select"
                   onChange={(event) =>
