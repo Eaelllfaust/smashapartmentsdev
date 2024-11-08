@@ -3081,3 +3081,25 @@ background-color: #ffa230;
   font-size: 1.2rem;
   margin-left:5px;
 }
+.input-group{
+  display: flex;
+  align-items: center;
+}
+.h89 button{
+  margin: 5px;
+  outline: none;
+  height: 40px;
+  color: #fff;
+  width: 40px;
+  border: none;
+  cursor: pointer;
+  float: right;
+  border-radius: 5px;
+  font-size: 1.5rem;
+  background-color: #f89820;
+}
+.ruin{
+  display: flex;
+align-items:flex-end;
+justify-content: flex-end;
+}

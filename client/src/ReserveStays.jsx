@@ -12,12 +12,38 @@ export default function ReserveStays() {
   const [stayDetails, setStayDetails] = useState(null);
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
-  const [numPeople, setNumPeople] = useState("");
-  const [numRooms, setNumRooms] = useState("");
+  const [numPeople, setNumPeople] = useState(0);
+  const [numRooms, setNumRooms] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [finalPriceNew, setFinalPrice] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const { user } = useContext(UserContext);
+
+  const handleIncrement = (field) => {
+    switch (field) {
+      case "numPeople":
+        setNumPeople((prevValue) => prevValue + 1);
+        break;
+      case "numRooms":
+        setNumRooms((prevValue) => prevValue + 1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleDecrement = (field) => {
+    switch (field) {
+      case "numPeople":
+        setNumPeople((prevValue) => (prevValue > 1 ? prevValue - 1 : 1));
+        break;
+      case "numRooms":
+        setNumRooms((prevValue) => (prevValue > 1 ? prevValue - 1 : 1));
+        break;
+      default:
+        break;
+    }
+  };
 
   const listingId = searchParams.get("id");
 
@@ -49,7 +75,7 @@ export default function ReserveStays() {
     if (checkInDate && checkOutDate && stayDetails) {
       const checkIn = new Date(checkInDate);
       const checkOut = new Date(checkOutDate);
-      
+
       // Add one day to include the checkout date
       const diffInTime = checkOut.getTime() - checkIn.getTime();
       const numberOfDays = Math.ceil(diffInTime / (1000 * 3600 * 24)) + 1;
@@ -119,8 +145,7 @@ export default function ReserveStays() {
       commission +
       vat +
       (finalSecurityLevy > 0 ? finalSecurityLevy : 0);
- 
-  
+
     // Proceed with payment
     const paystack = new window.PaystackPop();
     paystack.newTransaction({
@@ -137,7 +162,6 @@ export default function ReserveStays() {
   };
 
   const verifyPaymentAndBook = async (reference, final) => {
-
     try {
       const response = await axios.post("/verify_payment", {
         reference,
@@ -328,27 +352,63 @@ export default function ReserveStays() {
                 onChange={(e) => setCheckOutDate(e.target.value)}
               />
             </div>
+
             <div className="form h89">
               <label htmlFor="numPeople">Number of people</label>
-              <input
-                placeholder="Number of people"
-                type="number"
-                className="input"
-                value={numPeople}
-                onChange={(e) => setNumPeople(e.target.value)}
-              />
+              <div className="input-group">
+                <input
+                  placeholder="Number of people"
+                  type="number"
+                  className="form-control input"
+                  value={numPeople}
+                  onChange={(e) => setNumPeople(e.target.value)}
+                />
+              </div>
+              <div className="ruin">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={() => handleDecrement("numPeople")}
+                >
+                  -
+                </button>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={() => handleIncrement("numPeople")}
+                >
+                  +
+                </button>
+              </div>
             </div>
             <div className="form h89">
               <label htmlFor="numRooms">Number of rooms</label>
-              <input
-                placeholder="Number of rooms"
-                type="number"
-                className="input"
-                value={numRooms}
-                onChange={(e) => setNumRooms(e.target.value)}
-              />
+              <div className="input-group">
+                <input
+                  placeholder="Number of rooms"
+                  type="number"
+                  className="form-control input"
+                  value={numRooms}
+                  onChange={(e) => setNumRooms(parseInt(e.target.value))}
+                />
+              </div>
+              <div className="ruin">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={() => handleDecrement("numRooms")}
+                >
+                  -
+                </button>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={() => handleIncrement("numRooms")}
+                >
+                  +
+                </button>
+              </div>
             </div>
-
             <div className="l54">
               <div>
                 <h3>Check in</h3>
@@ -363,8 +423,8 @@ export default function ReserveStays() {
             <div className="l54">
               <div>
                 <h3>You selected</h3>
-                <p>{`${numRooms || "3"} rooms for ${
-                  numPeople || "2"
+                <p>{`${numRooms || "0"} rooms for ${
+                  numPeople || "0"
                 } people`}</p>
               </div>
             </div>
@@ -385,17 +445,19 @@ export default function ReserveStays() {
               </div>
             </div>
             <div className="l02_1">
-                <div>VAT (7.5%)</div>
-                <div>NGN {(totalPrice * 0.075).toLocaleString()}</div>
+              <div>VAT (7.5%)</div>
+              <div>NGN {(totalPrice * 0.075).toLocaleString()}</div>
+            </div>
+            <div className="l02_1">
+              <div>Commission (10%)</div>
+              <div>NGN {(totalPrice * 0.1).toLocaleString()}</div>
+            </div>
+            <div className="l02_1">
+              <div>Security Levy</div>
+              <div>
+                NGN {Number(stayDetails?.security_levy || 0).toLocaleString()}
               </div>
-              <div className="l02_1">
-                <div>Commission (10%)</div>
-                <div>NGN {(totalPrice * 0.1).toLocaleString()}</div>
-              </div>
-              <div className="l02_1">
-                <div>Security Levy</div>
-                <div>NGN {Number(stayDetails?.security_levy || 0).toLocaleString()}</div>
-              </div>
+            </div>
 
             <br />
             <h2>Total</h2>
