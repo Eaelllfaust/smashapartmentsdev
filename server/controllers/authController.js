@@ -543,7 +543,7 @@ const getRentalDetails = async (req, res) => {
 
     // Fetch associated images
     const images = await MediaTag.find({ listing_id: id }).lean();
-    
+
     // Fetch reviews associated with the rental
     const reviewData = await Reviews.aggregate([
       { $match: { listingId: rental._id } },
@@ -557,9 +557,10 @@ const getRentalDetails = async (req, res) => {
     ]);
 
     const averageRating =
-    reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
-  const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
-
+      reviewData.length > 0
+        ? Number(reviewData[0].averageRating.toFixed(1))
+        : null;
+    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
     // Combine rental data with images and reviews
     const rentalWithDetails = {
@@ -578,9 +579,6 @@ const getRentalDetails = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch rental data" });
   }
 };
-
-
-
 
 const getRentals = async (req, res) => {
   try {
@@ -670,9 +668,11 @@ const getRentals = async (req, res) => {
         ]);
 
         const averageRating =
-        reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
-      const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
-    
+          reviewData.length > 0
+            ? Number(reviewData[0].averageRating.toFixed(1))
+            : null;
+        const reviewCount =
+          reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
         return {
           ...rental,
@@ -689,7 +689,6 @@ const getRentals = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch rentals" });
   }
 };
-
 
 const reserveAndBookPickup = async (req, res) => {
   try {
@@ -759,7 +758,7 @@ const reserveAndBookPickup = async (req, res) => {
       serviceId,
       arrivalDate: arrivalDate,
       arrivalTime: arrivalTime,
-      totalAmount: totalPrice
+      totalAmount: totalPrice,
     });
     await sendNewBookingNotificationToOwnerPickup(serviceId);
     res.status(201).json({
@@ -795,7 +794,7 @@ const getPickupData = async (req, res) => {
     const images = await MediaTag.find({ listing_id: id }).lean();
 
     // Aggregate to get the average rating and review count for the service
-   const reviewData = await Reviews.aggregate([
+    const reviewData = await Reviews.aggregate([
       { $match: { listingId: service._id } },
       {
         $group: {
@@ -808,7 +807,9 @@ const getPickupData = async (req, res) => {
 
     // Check if reviewData has values and round the averageRating to 1 decimal place
     const averageRating =
-      reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
+      reviewData.length > 0
+        ? Number(reviewData[0].averageRating.toFixed(1))
+        : null;
     const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
     // Combine service data with images, rating, and review count
@@ -828,7 +829,6 @@ const getPickupData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch pickup service data" });
   }
 };
-
 
 const getPickups = async (req, res) => {
   try {
@@ -863,7 +863,8 @@ const getPickups = async (req, res) => {
 
     // Add filters for extra luggage and waiting time
     if (extraLuggage) filters.extraLuggage = extraLuggage === "true";
-    if (waitingTime) filters.waitingTime = { $regex: new RegExp(waitingTime, "i") };
+    if (waitingTime)
+      filters.waitingTime = { $regex: new RegExp(waitingTime, "i") };
 
     // Add filters for price (using pickupPrice)
     if (minPrice) filters.pickupPrice = { $gte: Number(minPrice) };
@@ -873,7 +874,8 @@ const getPickups = async (req, res) => {
     }
 
     // Add filters for availability
-    if (availableFrom) filters.availableFrom = { $lte: new Date(availableFrom) };
+    if (availableFrom)
+      filters.availableFrom = { $lte: new Date(availableFrom) };
     if (availableTo) filters.availableTo = { $gte: new Date(availableTo) };
 
     let pickups = await Service.find(filters)
@@ -904,11 +906,14 @@ const getPickups = async (req, res) => {
             },
           },
         ]);
-    
+
         // Check if reviewData has values and round the averageRating to 1 decimal place
         const averageRating =
-          reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
-        const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+          reviewData.length > 0
+            ? Number(reviewData[0].averageRating.toFixed(1))
+            : null;
+        const reviewCount =
+          reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
         return { ...pickup, images, averageRating, reviewCount };
       })
@@ -993,7 +998,7 @@ const getCurrentPickups = async (req, res) => {
 const getCoOfficeData = async (req, res) => {
   try {
     const { id } = req.params; // Get cooffice ID from request parameters
-    
+
     // Fetch cooffice data by ID
     const cooffice = await OfficeSpace.findById(id).lean();
     if (!cooffice) {
@@ -1010,14 +1015,16 @@ const getCoOfficeData = async (req, res) => {
         $group: {
           _id: "$listing_id",
           averageRating: { $avg: { $toDouble: "$rating" } }, // Calculate average rating
-          reviewCount: { $sum: 1 } // Count the number of reviews
+          reviewCount: { $sum: 1 }, // Count the number of reviews
         },
       },
     ]);
 
     const averageRating =
-    reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
-  const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+      reviewData.length > 0
+        ? Number(reviewData[0].averageRating.toFixed(1))
+        : null;
+    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
     // Combine cooffice data with images, review stats, and construct image URLs
     const coofficeWithDetails = {
@@ -1036,7 +1043,6 @@ const getCoOfficeData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch cooffice data" });
   }
 };
-
 
 const getCurrentRentals = async (req, res) => {
   try {
@@ -1773,7 +1779,9 @@ const updatebookingstatus = async (req, res) => {
       let propertyName;
       let securityLevyData;
       if (type === "stay") {
-        const stayListing = await StayListing.findById(booking.listingId).lean();
+        const stayListing = await StayListing.findById(
+          booking.listingId
+        ).lean();
         propertyName = stayListing.property_name;
         securityLevyData = stayListing.security_levy;
       } else if (type === "office") {
@@ -1782,14 +1790,20 @@ const updatebookingstatus = async (req, res) => {
         securityLevyData = officeSpace.security_levy;
       } else if (type === "rental") {
         const rentalItem = await Rental.findById(booking.rentalId).lean();
-        propertyName = "Ride rental"
+        propertyName = "Ride rental";
       } else if (type === "service") {
         const serviceItem = await Service.findById(booking.serviceId).lean();
         propertyName = "Pickup";
       }
 
       // Send the confirmatory email
-      await sendConfirmatoryEmail(email, booking, propertyName, securityLevyData, type);
+      await sendConfirmatoryEmail(
+        email,
+        booking,
+        propertyName,
+        securityLevyData,
+        type
+      );
     }
 
     res
@@ -1803,7 +1817,56 @@ const updatebookingstatus = async (req, res) => {
   }
 };
 
-const sendConfirmatoryEmail = async (email, booking, propertyName, securityLevyData, type) => {
+// New function to send check-in notification to support
+const sendCheckinNotification = async (bookingId, type) => {
+  const htmlTemplate = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Check-in Notification</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #221f60;">New Check-in Alert</h2>
+          <p>A customer has checked in for their booking.</p>
+          <p><strong>Booking Details:</strong></p>
+          <ul>
+              <li>Booking ID: ${bookingId}</li>
+              <li>Booking Type: ${type}</li>
+          </ul>
+          <p>Please review the booking details in the admin dashboard.</p>
+      </div>
+  </body>
+  </html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: "support@smashapartment.com",
+    subject: "New Check-in Alert",
+    html: htmlTemplate,
+    category: "Check-in Notification",
+    sandbox: true,
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Check-in notification sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending check-in notification:", error);
+    throw error;
+  }
+};
+
+const sendConfirmatoryEmail = async (
+  email,
+  booking,
+  propertyName,
+  securityLevyData,
+  type
+) => {
   let subject, titleText;
   if (type === "rental") {
     subject = "Your new rental has been confirmed";
@@ -1833,12 +1896,17 @@ const sendConfirmatoryEmail = async (email, booking, propertyName, securityLevyD
       </header>
       
       <main style="padding: 20px;">
-          <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">${titleText.replace('{propertyName}', propertyName)}</h1>
+          <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">${titleText.replace(
+            "{propertyName}",
+            propertyName
+          )}</h1>
           <p>Hello,</p>
           <p>We're pleased to inform you that your booking request for ${propertyName} has been confirmed.</p>
 
           ${
-            (type === "stay" || type === "office") && securityLevyData && securityLevyData !== ''
+            (type === "stay" || type === "office") &&
+            securityLevyData &&
+            securityLevyData !== ""
               ? `
           <div style="background-color: #f8f8f8; padding: 20px; border-radius: 5px; margin: 20px 0;">
               <h2 style="color: #ff8c00; margin-top: 0;">Security Levy</h2>
@@ -1852,7 +1920,7 @@ const sendConfirmatoryEmail = async (email, booking, propertyName, securityLevyD
               </ul>
           </div>
           `
-              : ''
+              : ""
           }
 
           <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
@@ -2120,7 +2188,7 @@ const getUpcomingBookings = async (req, res) => {
         OfficeSpace.find({ owner: userId }).lean(),
       ]
     );
- 
+
     const stayListingIds = stayListings.map((listing) => listing._id);
     const rentalIds = rentals.map((rental) => rental._id);
     const serviceIds = services.map((service) => service._id);
@@ -2571,7 +2639,7 @@ const sendNewBookingEmail = async (email, bookingDetails) => {
     text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
     html: htmlTemplate,
     category: "Booking Confirmation",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -2644,7 +2712,7 @@ const sendNewBookingEmailOffice = async (email, bookingDetails) => {
     text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
     html: htmlTemplate,
     category: "Booking Confirmation",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -2715,7 +2783,7 @@ const sendNewBookingEmailPickup = async (email, bookingDetails) => {
     text: `Thank you for your booking request at ${propertyName}. Your booking is awaiting confirmation. Check-in: ${bookingDetails.checkIn}, Check-out: ${bookingDetails.checkOut}, Guests: ${bookingDetails.guests}, Total: ${bookingDetails.totalAmount}`,
     html: htmlTemplate,
     category: "Booking Confirmation",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -2787,7 +2855,7 @@ const sendNewBookingEmailRental = async (email, bookingDetails) => {
     text: `Thank you for your rental request. Your booking is awaiting confirmation.`,
     html: htmlTemplate,
     category: "Booking Confirmation",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -2850,7 +2918,7 @@ const sendNewBookingNotificationToOwner = async (listingId) => {
     text: `You have received a new booking request for your property "${propertyName}". Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -2913,7 +2981,7 @@ const sendNewBookingNotificationToOwnerOffice = async (officeId) => {
     text: `You have received a new booking request for your property "${propertyName}". Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -2975,7 +3043,7 @@ const sendNewBookingNotificationToOwnerPickup = async (serviceId) => {
     text: `You have received a new booking request for your service. Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -2987,7 +3055,6 @@ const sendNewBookingNotificationToOwnerPickup = async (serviceId) => {
   }
 };
 const sendNewBookingNotificationToOwnerRental = async (rentalId) => {
-
   const listing = await CarRental.findById(rentalId).lean();
 
   const owner = await User.findById(listing.owner).lean();
@@ -3036,7 +3103,7 @@ const sendNewBookingNotificationToOwnerRental = async (rentalId) => {
     text: `You have received a new booking request for a rental. Please log in to your account to review and confirm this booking.`,
     html: htmlTemplate,
     category: "New Booking Notification",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -3110,13 +3177,13 @@ const verifyPaymentAndBook = async (req, res) => {
     });
 
     await newBooking.save();
-   
+
     await sendNewBookingEmail(decoded.email, {
       listingId,
       checkIn: checkInDate,
       checkOut: checkOutDate,
       guests: numPeople,
-      totalAmount: final
+      totalAmount: final,
     });
     await sendNewBookingNotificationToOwner(listingId);
     res
@@ -3212,7 +3279,7 @@ const verifyPaymentAndBookRental = async (req, res) => {
     });
 
     await newRentalBooking.save();
- 
+
     await sendNewBookingEmailRental(decoded.email, {
       rentalId: carRental._id,
       withDriver,
@@ -3220,7 +3287,7 @@ const verifyPaymentAndBookRental = async (req, res) => {
       pickupDate: pickupDateTime,
       pickupTime,
       dropoffLocation,
-      totalAmount: totalPrice
+      totalAmount: totalPrice,
     });
     await sendNewBookingNotificationToOwnerRental(rentalId);
     res.status(201).json({
@@ -3242,8 +3309,7 @@ const verifyPaymentAndBookRental = async (req, res) => {
 const verifyPaymentAndBookCooffice = async (req, res) => {
   try {
     const { token } = req.cookies;
-    const { reference, officeId, checkInDate, checkOutDate, final } =
-      req.body;
+    const { reference, officeId, checkInDate, checkOutDate, final } = req.body;
 
     if (!token) {
       return res.status(401).json({ error: "No token provided" });
@@ -3298,7 +3364,7 @@ const verifyPaymentAndBookCooffice = async (req, res) => {
       officeId,
       checkIn: checkInDate,
       checkOut: checkOutDate,
-      totalAmount: final
+      totalAmount: final,
     });
     await sendNewBookingNotificationToOwnerOffice(officeId);
     res.status(201).json({
@@ -3438,9 +3504,10 @@ const getListingData = async (req, res) => {
     ]);
 
     const averageRating =
-    reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
-  const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
-
+      reviewData.length > 0
+        ? Number(reviewData[0].averageRating.toFixed(1))
+        : null;
+    const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
     const listingWithImages = {
       ...listing,
@@ -3496,7 +3563,9 @@ const approveListing = async (req, res) => {
     res.status(200).json({ message: "Listing approved successfully", listing });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "An error occurred while approving the listing" });
+    res
+      .status(500)
+      .json({ error: "An error occurred while approving the listing" });
   }
 };
 
@@ -3592,7 +3661,7 @@ const getCooffices = async (req, res) => {
       minSize,
       limit,
       offset,
-      minRating // New query parameter for filtering by minimum rating
+      minRating, // New query parameter for filtering by minimum rating
     } = req.query;
 
     const filters = {};
@@ -3615,7 +3684,8 @@ const getCooffices = async (req, res) => {
     if (smoking) filters.smoking = smoking === "true";
     if (noLoudNoises) filters.no_loud_noises = noLoudNoises === "true";
     if (catering) filters.catering = catering === "true";
-    if (administrativeSupport) filters.administrative_support = administrativeSupport === "true";
+    if (administrativeSupport)
+      filters.administrative_support = administrativeSupport === "true";
 
     // Price filters
     if (minPrice) filters.price_per_day = { $gte: Number(minPrice) };
@@ -3625,7 +3695,8 @@ const getCooffices = async (req, res) => {
     }
 
     // Availability, desks, and size filters
-    if (availableFrom) filters.available_from = { $lte: new Date(availableFrom) };
+    if (availableFrom)
+      filters.available_from = { $lte: new Date(availableFrom) };
     if (availableTo) filters.available_to = { $gte: new Date(availableTo) };
     if (minDesks) filters.number_of_desks = { $gte: Number(minDesks) };
     if (minSize) filters.size_of_office = { $gte: Number(minSize) };
@@ -3660,10 +3731,12 @@ const getCooffices = async (req, res) => {
           },
         ]);
 
-
         const averageRating =
-        reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
-      const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+          reviewData.length > 0
+            ? Number(reviewData[0].averageRating.toFixed(1))
+            : null;
+        const reviewCount =
+          reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
         return {
           ...cooffice,
@@ -3688,8 +3761,6 @@ const getCooffices = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch cooffices" });
   }
 };
-
-
 
 const getListings = async (req, res) => {
   try {
@@ -3781,8 +3852,11 @@ const getListings = async (req, res) => {
         ]);
 
         const averageRating =
-        reviewData.length > 0 ? Number(reviewData[0].averageRating.toFixed(1)) : null;
-      const reviewCount = reviewData.length > 0 ? reviewData[0].reviewCount : 0;
+          reviewData.length > 0
+            ? Number(reviewData[0].averageRating.toFixed(1))
+            : null;
+        const reviewCount =
+          reviewData.length > 0 ? reviewData[0].reviewCount : 0;
 
         return { ...listing, images, averageRating, reviewCount };
       })
