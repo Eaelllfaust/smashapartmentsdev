@@ -8,6 +8,7 @@ export default function CreateDetails() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [DOB, setDOB] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -15,7 +16,13 @@ export default function CreateDetails() {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
+    console.log("Selected file:", file);
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -25,6 +32,10 @@ export default function CreateDetails() {
       } else {
         const response = await axios.post("/register", {
           email,
+          firstName,
+          lastName,
+          phoneNumber,
+          DOB,
           password,
         });
 
@@ -63,7 +74,7 @@ export default function CreateDetails() {
           </div>
         </div>
         <section className="form_area">
-          <div className="div">
+          <form className="div" onSubmit={handleSubmit}>
             <h2>Contact details</h2>
             <br />
             <p>
@@ -89,6 +100,15 @@ export default function CreateDetails() {
               onChange={(e) => setLastName(e.target.value)}
             />
             <br />
+            <label htmlFor="dob">Date of birth</label>
+            <br />
+            <input
+              type="date"
+              placeholder="Date of birth"
+              value={DOB}
+              onChange={(e) => setDOB(e.target.value)}
+            />
+            <br />
             <label htmlFor="phone">Phone number</label>
             <br />
             <input
@@ -97,6 +117,37 @@ export default function CreateDetails() {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
+            <br />
+            <br />
+            <label htmlFor="ID">Government issued ID</label>
+            <br />
+            <div
+              onClick={() => document.getElementById("fileInput").click()}
+              style={{
+                cursor: "pointer",
+                padding: "10px",
+                backgroundColor: "#007bff",
+                color: "white",
+                borderRadius: "5px",
+                textAlign: "center",
+                width: "150px",
+                marginBottom: "10px",
+                marginTop: "10px",
+              }}
+            >
+              Upload ID
+            </div>
+
+            {/* Hidden file input */}
+            <input
+              id="fileInput"
+              type="file"
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+
+            {/* Display selected file name */}
+            {selectedFile && <p>Selected file: {selectedFile.name}</p>}
             <br />
             <label htmlFor="password">Password</label>
             <br />
@@ -126,7 +177,7 @@ export default function CreateDetails() {
               By signing in or creating an account, you agree with
               our&nbsp;Terms &amp; Conditions&nbsp;and&nbsp;Privacy Statement
             </p>
-          </div>
+          </form>
         </section>
       </>
     </div>
