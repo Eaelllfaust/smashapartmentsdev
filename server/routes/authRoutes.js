@@ -97,6 +97,8 @@ const {
   approveListing,
   verifyAccountPartner,
   MakePayout,
+  UpdateActionStatus,
+  PendingActions,
 } = require("../controllers/authController");
 
 router.use(
@@ -123,7 +125,9 @@ router.put("/updatebookingstatus", updatebookingstatus);
 router.put("/updatepayoutsettings", updatePayoutSettings);
 router.put("/updatepartnerdetails", updatePartnerDetails);
 router.put("/updatepayment", updatePayment);
+router.put("/update-action-status/:id", UpdateActionStatus);
 router.get("/getlistings", getListings);
+router.get("/pending-actions", PendingActions);
 router.get("/getpickups", getPickups);
 router.get("/activeusers", activeUsers);
 router.get("/payoutdetails/:userId", payoutDetails);

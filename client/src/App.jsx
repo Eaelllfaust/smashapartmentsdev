@@ -101,6 +101,7 @@ import Editrental from "./partner/Editrental";
 import Editoffice from "./partner/Editoffice";
 import CreateDetails from "./CreateDetails";
 import AuthmeVendor from "./AuthmeVendor";
+import PendingTasks from "./administrator/PendingTasks";
 
 axios.defaults.baseURL = "http://localhost:8000";
 axios.defaults.withCredentials = true;
@@ -186,6 +187,7 @@ function App() {
         <Route path="/administrator/managelistings" element={<ManageListingsAdmin />} />
         <Route path="/administrator/manageusers" element={<ManageUsers />} />
         <Route path="/administrator/reports" element={<Reports />} />
+        <Route path="/administrator/pendingtasks" element={<PendingTasks />} />
         <Route path="/administrator/settings" element={<Settings />} />
         <Route path="/administrator/settings/generalsettings" element={<GeneralSettings />} />
         <Route path="/administrator/settings/email" element={<Email />} />

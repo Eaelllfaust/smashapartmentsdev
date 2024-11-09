@@ -221,19 +221,26 @@ const getTotalEarnings = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Fetch all earnings for the user
-    const earnings = await PartnerEarning.find({ userId: userId });
-
-    // Calculate total earnings
-    const totalEarnings = earnings.reduce(
-      (sum, earning) => sum + earning.amount,
+    const vendorPayouts = await VendorPayouts.find({ vendor: userId });
+    
+   
+    const totalEarnings = vendorPayouts.reduce(
+      (sum, payout) => sum + payout.amount,
       0
     );
 
-    res.status(200).json({ totalEarnings });
+    res.status(200).json({
+      totalEarnings,
+      payoutCount: vendorPayouts.length,
+      lastUpdated: new Date()
+    });
+
   } catch (error) {
     console.error("Error fetching earnings:", error);
-    res.status(500).json({ error: "Failed to fetch earnings" });
+    res.status(500).json({ 
+      error: "Failed to fetch earnings",
+      message: error.message 
+    });
   }
 };
 
@@ -1045,11 +1052,39 @@ const getCoOfficeData = async (req, res) => {
   }
 };
 
+const PendingActions = async (req, res) => {
+  try {
+    const actions = await Adminactions.find({ status: "pending" }).lean();
+    res.status(200).json(actions);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch pending actions" });
+  }
+}
+const UpdateActionStatus = async (req, res) => {
+
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const action = await Adminactions.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!action) return res.status(404).json({ error: "Action not found" });
+
+    res.status(200).json({ message: "Action status updated successfully", action });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update action status" });
+  }
+
+}
+
 const getCurrentRentals = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Fetch rentals with status 'confirmed', 'reserved', 'cancelled', or 'ended'
     const rentals = await Rental.find({
       userId,
       status: { $in: ["confirmed", "reserved", "cancelled", "ended"] },
@@ -1059,24 +1094,20 @@ const getCurrentRentals = async (req, res) => {
       return res.status(404).json({ error: "No rentals found for this user" });
     }
 
-    // Fetch associated car rental details and media for each rental
     const rentalsWithDetails = await Promise.all(
       rentals.map(async (rental) => {
         try {
-          // Fetch car rental details
+
           const carRental = await CarRental.findById(rental.rentalId).lean();
 
-          // Fetch associated media
           const media = await MediaTag.find({
             listing_id: rental.rentalId,
           }).lean();
 
-          // Fetch uploaded receipts for this rental
           const receipts = await Receipts.find({
             booking_id: rental._id,
           }).lean();
 
-          // Return rental with car rental details, media, and receipts
           return {
             ...rental,
             carRentalDetails: carRental,
@@ -1084,14 +1115,14 @@ const getCurrentRentals = async (req, res) => {
             driverPhoneNumber: carRental?.driverPhoneNumber || "Not provided",
             driverEmail: carRental?.driverEmail || "Not provided",
             carNameModel: carRental?.carNameModel || "Unknown",
-            receipts, // Add receipts to the rental details
+            receipts,
           };
         } catch (err) {
           console.error(
             `Error fetching details for rental ${rental._id}:`,
             err
           );
-          return rental; // Return rental with default values if there's an error
+          return rental; 
         }
       })
     );
@@ -1109,7 +1140,7 @@ const getCurrentBookings = async (req, res) => {
 
     const bookings = await Booking.find({
       userId,
-      status: { $in: ["confirmed", "reserved", "cancelled", "ended"] },
+      status: { $in: ["confirmed", "reserved", "cancelled", "ended", "pending"] },
     }).lean();
 
     if (!bookings.length) {
@@ -6519,5 +6550,7 @@ module.exports = {
   verifyAccountPartner,
   getReview,
   MakePayout,
+  UpdateActionStatus,
+  PendingActions,
   Review,
 };

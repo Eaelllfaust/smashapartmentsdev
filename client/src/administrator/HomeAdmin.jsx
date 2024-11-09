@@ -74,7 +74,7 @@ export default function HomeAdmin() {
           <div className="ibox">
             <div className="i2">
               <h2>{upcomingBookings} Bookings</h2>
-              {/* <img src="../assets/check.svg" alt="Bookings icon" /> */}
+              {}
             </div>
             <p>This is the number of current bookings</p>
             <Link to="managebookings" className="link">
@@ -84,7 +84,7 @@ export default function HomeAdmin() {
           <div className="ibox">
             <div className="i2">
               <h2>{activeUsers} Active Users</h2>
-              {/* <img src="../assets/time.svg" alt="Active users icon" /> */}
+              {}
             </div>
             <p>This is the number of active users on Smash Apartments</p>
           </div>
@@ -153,7 +153,7 @@ export default function HomeAdmin() {
               Manage reports
             </Link>
           </div>
-          <div className="node_item">
+          {/* <div className="node_item">
             <h2>
               Settings, Help & Support{" "}
               <img className="goto" src="../assets/goto.svg" alt="Go to" />
@@ -164,7 +164,7 @@ export default function HomeAdmin() {
             <Link to="settings" className="link">
               Manage settings
             </Link>
-          </div>
+          </div> */}
         </div>
       </section>
     </>

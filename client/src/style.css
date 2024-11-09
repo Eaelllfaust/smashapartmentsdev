@@ -3118,3 +3118,18 @@ li{
 .n2d div{
   margin-bottom: 10px;
 }
+.action_item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.action_item p {
+  margin: 0;
+  font-size: 16px;
+}

@@ -289,8 +289,9 @@ export default function CurrentBookings() {
                       <div className="action">
                         <div
                           className="new_btn_2"
-                          onClick={() => openReviewModal(booking._id, booking.listingId)}
-
+                          onClick={() =>
+                            openReviewModal(booking._id, booking.listingId)
+                          }
                         >
                           Review and rate
                         </div>
