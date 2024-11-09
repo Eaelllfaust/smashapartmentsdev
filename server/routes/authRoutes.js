@@ -96,6 +96,7 @@ const {
   getReview,
   approveListing,
   verifyAccountPartner,
+  MakePayout,
 } = require("../controllers/authController");
 
 router.use(
@@ -150,6 +151,7 @@ router.get("/listings/inactivegeneral", getAllInactiveListingsGeneral);
 router.post("/likeproperty", likeProperty);
 router.post("/updatestatus", updateStatus);
 router.post("/submit-review", Review);
+router.post("/makepayout", MakePayout);
 router.post("/cancelbooking/:bookingId", cancelBooking);
 router.post("/cancelofficespace/:bookingId", cancelOfficeSpace );
 router.post("/cancelrental/:rentalId", cancelRental);

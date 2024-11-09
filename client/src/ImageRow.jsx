@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 const ImageGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr) 0.8fr;
+  grid-template-columns: repeat(2, 1fr) 0.8fr;
   gap: 8px;
   height: 200px;
   overflow: hidden;
@@ -29,6 +29,7 @@ const ViewAllOverlay = styled.div`
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  height:200px;
   font-size: 1.2rem;
   font-weight: 600;
   transition: background-color 0.2s;
@@ -41,17 +42,17 @@ const ViewAllOverlay = styled.div`
 export const ImageRow = ({ images, onImageClick }) => {
   return (
     <ImageGrid>
-      {images.slice(0, 3).map((image, index) => (
+      {images.slice(0, 2).map((image, index) => (
         <GridImage
           key={index}
-          src={`http://localhost:8000/${image.url}`}
+          src={`https://smashapartments.com${image.url}`}
           alt="Property Image"
           onClick={() => onImageClick(index)}
         />
       ))}
-      {images.length > 3 && (
+      {images.length > 2 && (
         <ViewAllOverlay onClick={() => onImageClick(0)}>
-          <span>+{images.length - 3}</span>
+          <span>+{images.length - 2}</span>
         </ViewAllOverlay>
       )}
     </ImageGrid>

@@ -53,14 +53,14 @@ export default function StaysDetails() {
   const closeModal = () => setIsModalOpen(false);
 
   const handleShare = () => {
-    const currentUrl = window.location.href; // Get the current URL
+    const currentUrl = window.location.href; 
     navigator.clipboard
-      .writeText(currentUrl) // Copy URL to clipboard
+      .writeText(currentUrl) 
       .then(() => {
-        toast.success("Copied!"); // Show success toast
+        toast.success("Copied!"); 
       })
       .catch((error) => {
-        toast.error("Failed to copy URL"); // Show error toast if something goes wrong
+        toast.error("Failed to copy URL"); 
       });
   };
   const handleReserveClick = () => {

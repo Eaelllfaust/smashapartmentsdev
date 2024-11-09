@@ -8,6 +8,7 @@ const LikedItem = require("../models/likeditem");
 const Service = require("../models/service");
 const OfficeSpace = require("../models/cooffice");
 const Receipts = require("../models/receipts");
+const VendorPayouts = require("../models/vendorpayouts");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -1551,11 +1552,139 @@ const updateUserStatus = async (req, res) => {
   }
 };
 
+const MakePayout = async (req, res) => {
+  try {
+    const { vendor, booking, listing, amount, date, remark } = req.body;
+    const payout = new VendorPayouts({
+      vendor,
+      booking,
+      listing,
+      amount,
+      date,
+      remark,
+    });
+    
+    // Save the payout record
+    const savedPayout = await payout.save();
+    
+    try {
+      // Send email notification
+      await sendPayoutNotificationToVendor(savedPayout._id);
+      
+      res.status(201).json({ 
+        message: "Payout added successfully and notification sent",
+        payoutId: savedPayout._id 
+      });
+    } catch (emailError) {
+      // If email fails, log the error but don't fail the whole operation
+      console.error("Failed to send payout notification:", emailError);
+      res.status(201).json({ 
+        message: "Payout added successfully but notification failed",
+        payoutId: savedPayout._id 
+      });
+    }
+  } catch (error) {
+    console.error("Error in MakePayout:", error);
+    res.status(500).json({ 
+      error: "Failed to add payout",
+      details: error.message 
+    });
+  }
+};
+const sendPayoutNotificationToVendor = async (payoutId) => {
+  // Fetch payout with populated booking details
+  const payout = await VendorPayouts.findById(payoutId).lean();
+  
+  // Fetch vendor details
+  const vendor = await User.findById(payout.vendor).lean();
+  const vendorEmail = vendor.email;
+  const vendorName = vendor.first_name;
+
+  // Format the date nicely
+  const formattedDate = new Date(payout.date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payout Notification from smashapartments.com</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">Payout Notification</h1>
+        <p>Hello, ${vendorName}</p>
+        <p>We are pleased to inform you that a payout has been processed for your account on smashapartments.com.</p>
+        
+        <div style="background-color: #f8f8f8; padding: 20px; margin: 20px 0; border-radius: 5px;">
+            <h2 style="color: #221f60; margin-top: 0;">Payout Details:</h2>
+            <p><strong>Amount:</strong> NGN ${payout.amount.toFixed(2)}</p>
+            <p><strong>Date:</strong> ${formattedDate}</p>
+            <p><strong>Booking Reference:</strong> ${payout.booking}</p>
+            <p><strong>Remark:</strong> ${payout.remark}</p>
+        </div>
+
+        <div style="margin: 20px 0; padding: 15px; border-left: 4px solid #ff8c00; background-color: #fff4e6;">
+            <p style="margin: 0;"><strong>Important:</strong> Please keep your booking reference number <strong>${payout.booking}</strong> for your records. You may need this for any future correspondence.</p>
+        </div>
+
+        <p>The funds have been processed according to your payment preferences. Please allow 2-3 business days for the amount to reflect in your account.</p>
+        <p>If you have any questions about this payout, please don't hesitate to contact our support team and reference your booking number.</p>
+        
+     
+        
+        <p>Best regards,<br>The smashapartments.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from smashapartments.com regarding your recent payout.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [vendorEmail],
+    subject: `Payout Processed - NGN ${payout.amount.toFixed(2)} - smashapartments.com`,
+    text: `A payout of NGN ${payout.amount.toFixed(2)} has been processed for your account (Booking Reference: ${payout.booking}). Remark: ${payout.remark}. 
+    
+Please keep your booking reference number for your records.
+
+Please allow 2-3 business days for the amount to reflect in your account.
+`,
+    html: htmlTemplate,
+    category: "Payout Notification",
+    sandbox: true,
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("Payout notification email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending payout notification email:", error);
+    throw error;
+  }
+};
 const getAllListingsGeneral = async (req, res) => {
   try {
     const { ownerId } = req.params;
 
-    // Fetch all listings for the given owner irrespective of their status
     const stayListings = await StayListing.find().lean();
 
     const services = await Service.find().lean();
@@ -2058,6 +2187,121 @@ const getAllBookings = async (req, res) => {
   }
 };
 
+// const getAllBookingsGeneral = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+
+//     // Fetch all listings with their owners
+//     const stayListings = await StayListing.find().lean();
+//     const officeSpaces = await OfficeSpace.find().lean();
+//     const carRentals = await CarRental.find().lean();
+//     const services = await Service.find().lean();
+
+//     // Create maps of listings by their IDs
+//     const stayListingMap = stayListings.reduce((acc, listing) => {
+//       acc[listing._id] = listing;
+//       return acc;
+//     }, {});
+//     const officeSpaceMap = officeSpaces.reduce((acc, listing) => {
+//       acc[listing._id] = listing;
+//       return acc;
+//     }, {});
+//     const carRentalMap = carRentals.reduce((acc, listing) => {
+//       acc[listing._id] = listing;
+//       return acc;
+//     }, {});
+//     const serviceMap = services.reduce((acc, listing) => {
+//       acc[listing._id] = listing;
+//       return acc;
+//     }, {});
+
+//     // Collect all owner IDs
+//     const ownerIds = [
+//       ...stayListings.map((listing) => listing.owner),
+//       ...officeSpaces.map((listing) => listing.owner),
+//       ...carRentals.map((listing) => listing.owner),
+//       ...services.map((listing) => listing.owner),
+//     ];
+//     const uniqueOwnerIds = [...new Set(ownerIds)];
+
+//     // Fetch all bookings
+//     const stayBookings = await Booking.find({
+//       listingId: { $in: stayListings.map((listing) => listing._id) },
+//     }).lean();
+//     const officeBookings = await CoofficeBooking.find({
+//       officeId: { $in: officeSpaces.map((listing) => listing._id) },
+//     }).lean();
+//     const rentalBookings = await Rental.find({
+//       rentalId: { $in: carRentals.map((listing) => listing._id) },
+//     }).lean();
+//     const serviceBookings = await ServiceBooking.find({
+//       serviceId: { $in: services.map((listing) => listing._id) },
+//     }).lean();
+
+//     // Collect all user IDs from bookings
+//     const userIds = [
+//       ...stayBookings.map((booking) => booking.userId),
+//       ...officeBookings.map((booking) => booking.userId),
+//       ...rentalBookings.map((booking) => booking.userId),
+//       ...serviceBookings.map((booking) => booking.userId),
+//     ];
+//     const uniqueUserIds = [...new Set(userIds)];
+
+//     // Fetch users and payouts in parallel
+//     const [users, ownerPayouts] = await Promise.all([
+//       User.find({ _id: { $in: uniqueUserIds } }).lean(),
+//       Payout.find({ userId: { $in: uniqueOwnerIds } }).lean(),
+//     ]);
+
+//     // Create maps for users and payouts
+//     const userMap = users.reduce((acc, user) => {
+//       acc[user._id] = user;
+//       return acc;
+//     }, {});
+
+//     const payoutMap = ownerPayouts.reduce((acc, payout) => {
+//       acc[payout.userId] = payout;
+//       return acc;
+//     }, {});
+
+//     // Combine all bookings with user and owner payout information
+//     const allBookings = [
+//       ...stayBookings.map((booking) => ({
+//         ...booking,
+//         type: "stay",
+//         user: userMap[booking.userId],
+//         listing: stayListingMap[booking.listingId],
+//         ownerPayout: payoutMap[stayListingMap[booking.listingId].owner] || null,
+//       })),
+//       ...officeBookings.map((booking) => ({
+//         ...booking,
+//         type: "office",
+//         user: userMap[booking.userId],
+//         listing: officeSpaceMap[booking.officeId],
+//         ownerPayout: payoutMap[officeSpaceMap[booking.officeId].owner] || null,
+//       })),
+//       ...rentalBookings.map((booking) => ({
+//         ...booking,
+//         type: "rental",
+//         user: userMap[booking.userId],
+//         listing: carRentalMap[booking.rentalId],
+//         ownerPayout: payoutMap[carRentalMap[booking.rentalId].owner] || null,
+//       })),
+//       ...serviceBookings.map((booking) => ({
+//         ...booking,
+//         type: "service",
+//         user: userMap[booking.userId],
+//         listing: serviceMap[booking.serviceId],
+//         ownerPayout: payoutMap[serviceMap[booking.serviceId].owner] || null,
+//       })),
+//     ];
+
+//     res.status(200).json(allBookings);
+//   } catch (error) {
+//     console.error("Error fetching bookings:", error);
+//     res.status(500).json({ error: "Failed to fetch bookings" });
+//   }
+// };
 const getAllBookingsGeneral = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -2109,6 +2353,14 @@ const getAllBookingsGeneral = async (req, res) => {
       serviceId: { $in: services.map((listing) => listing._id) },
     }).lean();
 
+    // Collect all booking IDs
+    const bookingIds = [
+      ...stayBookings.map(booking => booking._id),
+      ...officeBookings.map(booking => booking._id),
+      ...rentalBookings.map(booking => booking._id),
+      ...serviceBookings.map(booking => booking._id),
+    ];
+
     // Collect all user IDs from bookings
     const userIds = [
       ...stayBookings.map((booking) => booking.userId),
@@ -2118,13 +2370,13 @@ const getAllBookingsGeneral = async (req, res) => {
     ];
     const uniqueUserIds = [...new Set(userIds)];
 
-    // Fetch users and payouts in parallel
-    const [users, ownerPayouts] = await Promise.all([
+    // Fetch users, owner payouts, and vendor payouts in parallel
+    const [users, ownerPayouts, vendorPayouts] = await Promise.all([
       User.find({ _id: { $in: uniqueUserIds } }).lean(),
       Payout.find({ userId: { $in: uniqueOwnerIds } }).lean(),
+      VendorPayouts.find({ booking: { $in: bookingIds } }).lean(),
     ]);
-
-    // Create maps for users and payouts
+    // Create maps for users, payouts, and vendor payouts
     const userMap = users.reduce((acc, user) => {
       acc[user._id] = user;
       return acc;
@@ -2135,7 +2387,13 @@ const getAllBookingsGeneral = async (req, res) => {
       return acc;
     }, {});
 
-    // Combine all bookings with user and owner payout information
+    // Create map for vendor payouts by booking ID
+    const vendorPayoutMap = vendorPayouts.reduce((acc, payout) => {
+      acc[payout.booking] = payout;
+      return acc;
+    }, {});
+
+    // Combine all bookings with user, owner payout, and vendor payout information
     const allBookings = [
       ...stayBookings.map((booking) => ({
         ...booking,
@@ -2143,6 +2401,7 @@ const getAllBookingsGeneral = async (req, res) => {
         user: userMap[booking.userId],
         listing: stayListingMap[booking.listingId],
         ownerPayout: payoutMap[stayListingMap[booking.listingId].owner] || null,
+        vendorPayout: vendorPayoutMap[booking._id] || null,  // Added vendor payout
       })),
       ...officeBookings.map((booking) => ({
         ...booking,
@@ -2150,6 +2409,7 @@ const getAllBookingsGeneral = async (req, res) => {
         user: userMap[booking.userId],
         listing: officeSpaceMap[booking.officeId],
         ownerPayout: payoutMap[officeSpaceMap[booking.officeId].owner] || null,
+        vendorPayout: vendorPayoutMap[booking._id] || null,  // Added vendor payout
       })),
       ...rentalBookings.map((booking) => ({
         ...booking,
@@ -2157,6 +2417,7 @@ const getAllBookingsGeneral = async (req, res) => {
         user: userMap[booking.userId],
         listing: carRentalMap[booking.rentalId],
         ownerPayout: payoutMap[carRentalMap[booking.rentalId].owner] || null,
+        vendorPayout: vendorPayoutMap[booking._id] || null,  // Added vendor payout
       })),
       ...serviceBookings.map((booking) => ({
         ...booking,
@@ -2164,6 +2425,7 @@ const getAllBookingsGeneral = async (req, res) => {
         user: userMap[booking.userId],
         listing: serviceMap[booking.serviceId],
         ownerPayout: payoutMap[serviceMap[booking.serviceId].owner] || null,
+        vendorPayout: vendorPayoutMap[booking._id] || null,  // Added vendor payout
       })),
     ];
 
@@ -5144,7 +5406,9 @@ const verifyAccount = async (req, res) => {
         const loginTime = new Date().toLocaleString();
         await sendLoginEmail(user.email, loginTime);
 
-        return res.status(200).json({ message: "Account verified successfully", token });
+        return res
+          .status(200)
+          .json({ message: "Account verified successfully", token });
       }
     );
   } catch (error) {
@@ -5197,7 +5461,9 @@ const verifyAccountPartner = async (req, res) => {
         const loginTime = new Date().toLocaleString();
         await sendLoginEmail(user.email, loginTime);
 
-        return res.status(200).json({ message: "Account verified successfully", token });
+        return res
+          .status(200)
+          .json({ message: "Account verified successfully", token });
       }
     );
   } catch (error) {
@@ -5306,15 +5572,20 @@ const sendRecoveryEmail = async (email, newPassword) => {
   }
 };
 
-
-
-
 const registerUser = async (req, res) => {
   try {
-    const { email, firstName, lastName, phoneNumber, DOB, password, gId } = req.body;
+    const { email, firstName, lastName, phoneNumber, DOB, password, gId } =
+      req.body;
 
     // Data validation checks
-    if (!email || !firstName || !lastName || !phoneNumber || !DOB || !password) {
+    if (
+      !email ||
+      !firstName ||
+      !lastName ||
+      !phoneNumber ||
+      !DOB ||
+      !password
+    ) {
       return res.status(400).json({
         error: "All fields are required",
       });
@@ -5340,7 +5611,7 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       email,
       password: hashedPassword,
-      account_type: 'user',
+      account_type: "user",
       first_name: firstName,
       last_name: lastName,
       phone_number: phoneNumber,
@@ -5433,7 +5704,7 @@ const sendVerificationEmail = async (email, code) => {
     text: `Your verification code is: ${code}`,
     html: htmlTemplate,
     category: "Verification",
-    sandbox:true
+    sandbox: true,
   };
 
   try {
@@ -5490,7 +5761,7 @@ const sendLoginEmail = async (email, loginTime) => {
     text: `A new login to your account was detected at ${loginTime}. If this wasn't you, please contact support.`,
     html: htmlTemplate,
     category: "Login Notification",
-    sandbox: true
+    sandbox: true,
   };
 
   try {
@@ -5613,12 +5884,11 @@ const loginPartner = async (req, res) => {
 
         // Send login notification email
         const loginTime = new Date().toLocaleString();
-         try {
+        try {
           await sendLoginEmail(user.email, loginTime);
         } catch (emailError) {
           console.error("Error sending login notification email:", emailError);
-        
-         }
+        }
 
         res.cookie("token", token).json(user);
       }
@@ -5849,8 +6119,14 @@ const updatePartnerDetails = async (req, res) => {
         }
 
         // Update partner details
-        const { first_name, last_name, phone_number, contact_email, dob, address } =
-          req.body;
+        const {
+          first_name,
+          last_name,
+          phone_number,
+          contact_email,
+          dob,
+          address,
+        } = req.body;
         user.first_name = first_name || user.first_name;
         user.last_name = last_name || user.last_name;
         user.phone_number = phone_number || user.phone_number;
@@ -6068,12 +6344,20 @@ const getPaymentMethod = async (req, res) => {
 //   }
 // };
 
-const createPartner = async(req, res) => {
+const createPartner = async (req, res) => {
   try {
-    const { email, firstName, lastName, phoneNumber, DOB, password, address } = req.body;
+    const { email, firstName, lastName, phoneNumber, DOB, password, address } =
+      req.body;
 
     // Data validation checks
-    if (!email || !firstName || !lastName || !phoneNumber || !DOB || !password) {
+    if (
+      !email ||
+      !firstName ||
+      !lastName ||
+      !phoneNumber ||
+      !DOB ||
+      !password
+    ) {
       return res.status(400).json({
         error: "All fields are required",
       });
@@ -6099,7 +6383,7 @@ const createPartner = async(req, res) => {
     const user = await User.create({
       email,
       password: hashedPassword,
-      account_type: 'partner',
+      account_type: "partner",
       first_name: firstName,
       last_name: lastName,
       phone_number: phoneNumber,
@@ -6140,7 +6424,7 @@ const createPartner = async(req, res) => {
       error: "Server error, please try again later",
     });
   }
-}
+};
 module.exports = {
   test,
   registerUser,
@@ -6234,5 +6518,6 @@ module.exports = {
   approveListing,
   verifyAccountPartner,
   getReview,
+  MakePayout,
   Review,
 };

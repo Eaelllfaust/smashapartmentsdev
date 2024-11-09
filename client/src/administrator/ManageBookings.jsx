@@ -7,7 +7,7 @@ import "react-confirm-alert/src/react-confirm-alert.css";
 import axios from "axios";
 import { toast } from "react-toastify";
 import ListingDetailsModal from "./ListingDetailsModal";
-
+import PayoutModal from "./PayoutModal";
 export default function ManageBookings() {
   const { user, loading } = useContext(UserContext);
   const navigate = useNavigate();
@@ -19,6 +19,9 @@ export default function ManageBookings() {
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedListing, setSelectedListing] = useState(null);
 
   useEffect(() => {
     if (loading) return;
@@ -63,7 +66,19 @@ export default function ManageBookings() {
   const handleSearch = (e) => {
     e.preventDefault();
   };
+  const openPayoutModal = (booking, listing) => {
+    setSelectedBooking(booking);
+    setSelectedListing(listing);
+    setIsPayoutModalOpen(true);
+  };
 
+   
+
+  const closePayoutModal = () => {
+    setIsPayoutModalOpen(false);
+    setSelectedBooking(null);
+    setSelectedListing(null);
+  };
   const handleStatusChange = (bookingId, bookingtype, newStatus) => {
     confirmAlert({
       title: "Confirm Status Change",
@@ -188,7 +203,8 @@ export default function ManageBookings() {
                 <div key={booking._id} className="block_item stay">
                   <div className="row_item_2">
                     <div>
-                      User: {booking.user.first_name} {booking.user.last_name}
+                      User: {booking.user.first_name} {booking.user.last_name}{" "}
+                      {booking.user.email}
                     </div>
                     <div
                       className={
@@ -239,7 +255,7 @@ export default function ManageBookings() {
                   <br />
                   <div className="row_item_2">
                     <div
-                      className="button"
+                      className="btn_22"
                       onClick={() => {
                         setListingData(booking.listing);
                         setIsModalOpen(true);
@@ -261,8 +277,28 @@ export default function ManageBookings() {
                         Account number: {booking.ownerPayout.accountNumber}
                       </div>
                     </div>
+                    <br />
+                    <div
+                      onClick={() => openPayoutModal(booking, booking.listing)}
+                      className="btn_22"
+                    >
+                      confirm payout
+                    </div>
+                    <br />
+                    <div>
+                    {
+                        booking.vendorPayout  ? (
+                          <div className="n2d">
+                          <div> Vendor has been paid {booking.vendorPayout.amount}</div>
+                          <div> Date : {new Date(booking.vendorPayout.date).toLocaleDateString()}</div>
+                          <div> Remark : {booking.vendorPayout.remark}</div>
+                         </div>
+                        )
+                        : ""
+                      }
+                    </div>
                   </div>
-                  
+
                   {/* 
                   <div className="row_item_2">
                     <div className="">Switch booking status</div>
@@ -283,7 +319,6 @@ export default function ManageBookings() {
                       <option value="ended">ended</option>
                     </select>
                   </div> */}
-
                 </div>
               );
             } else if (booking.type === "rental") {
@@ -366,6 +401,26 @@ export default function ManageBookings() {
                       <div>
                         Account number: {booking.ownerPayout.accountNumber}
                       </div>
+                    </div>
+                    <br />
+                    <div
+                      onClick={() => openPayoutModal(booking, booking.listing)}
+                      className="btn_22"
+                    >
+                      confirm payout
+                    </div>
+                    <br />
+                    <div>
+                    {
+                        booking.vendorPayout  ? (
+                          <div className="n2d">
+                          <div> Vendor has been paid {booking.vendorPayout.amount}</div>
+                          <div> Date : {new Date(booking.vendorPayout.date).toLocaleDateString()}</div>
+                          <div> Remark : {booking.vendorPayout.remark}</div>
+                         </div>
+                        )
+                        : ""
+                      }
                     </div>
                   </div>
                   {/* <div className="row_item_2">
@@ -462,6 +517,26 @@ export default function ManageBookings() {
                         Account number: {booking.ownerPayout.accountNumber}
                       </div>
                     </div>
+                    <br />
+                    <div
+                      className="btn_22"
+                      onClick={() => openPayoutModal(booking, booking.listing)}
+                    >
+                      confirm payout
+                    </div>
+                    <br />
+                    <div>
+                    {
+                        booking.vendorPayout  ? (
+                          <div className="n2d">
+                          <div> Vendor has been paid {booking.vendorPayout.amount}</div>
+                          <div> Date : {new Date(booking.vendorPayout.date).toLocaleDateString()}</div>
+                          <div> Remark : {booking.vendorPayout.remark}</div>
+                         </div>
+                        )
+                        : ""
+                      }
+                    </div>
                   </div>
                   {/* <div className="row_item_2">
                     <select
@@ -555,6 +630,26 @@ export default function ManageBookings() {
                         Account number: {booking.ownerPayout.accountNumber}
                       </div>
                     </div>
+                    <br />
+                    <div
+                      className="btn_22"
+                      onClick={() => openPayoutModal(booking, booking.listing)}
+                    >
+                      confirm payout
+                    </div>
+                    <br />
+                    <div>
+                    {
+                        booking.vendorPayout  ? (
+                          <div className="n2d">
+                          <div> Vendor has been paid {booking.vendorPayout.amount}</div>
+                          <div> Date : {new Date(booking.vendorPayout.date).toLocaleDateString()}</div>
+                          <div> Remark : {booking.vendorPayout.remark}</div>
+                         </div>
+                        )
+                        : ""
+                      }
+                    </div>
                   </div>
                   {/* <div className="row_item_2">
                     <select
@@ -591,6 +686,13 @@ export default function ManageBookings() {
           listing={listingData}
           type={listingType}
         />
+        {isPayoutModalOpen && selectedBooking && selectedListing && (
+          <PayoutModal
+            booking={selectedBooking}
+            listing={selectedListing}
+            onClose={closePayoutModal}
+          />
+        )}
       </section>
     </>
   );
