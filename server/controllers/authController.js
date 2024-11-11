@@ -1235,18 +1235,37 @@ const getUserBookings = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    // Find users where account_type is not "admin" and exclude password from the results
+    // Fetch all users with account_type not equal to "admin", excluding password
     const users = await User.find(
       { account_type: { $ne: "admin" } },
       "-password"
+    ).lean();
+
+    // Loop through each user to fetch their government ID images
+    const usersWithGovId = await Promise.all(
+      users.map(async (user) => {
+        const governmentIdImages = await MediaTag.find({
+          listing_id: user._id,
+        }).lean();
+
+        // Add government ID images to user data
+        return {
+          ...user,
+          governmentIdImages: governmentIdImages.map((image) => ({
+            url: `${image.media_location}`, // Adjust based on your URL setup
+            ...image,
+          })),
+        };
+      })
     );
-    res.json(users);
+
+    res.json(usersWithGovId);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching users", error: error.message });
+    console.error("Error fetching users and government ID images:", error);
+    res.status(500).json({ message: "Error fetching users", error: error.message });
   }
 };
+
 
 async function aggregateRevenueFromSchema(
   schema,

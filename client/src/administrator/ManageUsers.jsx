@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "../../context/userContext";
 import axios from "axios";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { toast } from "react-toastify";
+
 
 export default function ManageUsers() {
   const navigate = useNavigate();
@@ -32,31 +33,30 @@ export default function ManageUsers() {
   const fetchPayoutDetails = async (userId) => {
     try {
       const response = await axios.get(`/payoutdetails/${userId}`);
-      setPayoutDetails(prevDetails => ({
+      setPayoutDetails((prevDetails) => ({
         ...prevDetails,
-        [userId]: response.data
+        [userId]: response.data,
       }));
     } catch (error) {
       console.error("Error fetching payout details", error);
-      toast.error('Failed to fetch payout details. Please try again.');
+      toast.error("Failed to fetch payout details. Please try again.");
     }
   };
 
   const togglePayoutDetails = (userId) => {
     if (payoutDetails[userId]) {
-      // If details are already loaded, just toggle visibility
-      setPayoutDetails(prevDetails => ({
+      setPayoutDetails((prevDetails) => ({
         ...prevDetails,
         [userId]: {
           ...prevDetails[userId],
-          visible: !prevDetails[userId].visible
-        }
+          visible: !prevDetails[userId].visible,
+        },
       }));
     } else {
-      // If details are not loaded, fetch them
       fetchPayoutDetails(userId);
     }
   };
+
   const fetchActiveUsers = async () => {
     try {
       const response = await axios.get(`/activeusers`);
@@ -86,48 +86,49 @@ export default function ManageUsers() {
 
   const handleStatusChange = async (userId, newStatus) => {
     confirmAlert({
-      title: 'Confirm Status Change',
+      title: "Confirm Status Change",
       message: `Are you sure you want to set this user's status to ${newStatus}?`,
       buttons: [
         {
-          label: 'Yes',
+          label: "Yes",
           onClick: async () => {
             try {
-              await axios.post('/updateuserstatus', {
+              await axios.post("/updateuserstatus", {
                 userId,
-                status: newStatus
+                status: newStatus,
               });
-              toast.success('User status updated successfully');
-              fetchUsers(); // Refresh the user list
+              toast.success("User status updated successfully");
+              fetchUsers(); 
             } catch (error) {
               console.error("Error updating user status", error);
-              toast.error('Failed to update user status. Please try again.');
+              toast.error("Failed to update user status. Please try again.");
             }
-          }
+          },
         },
         {
-          label: 'No',
+          label: "No",
           onClick: () => {
-            // Do nothing on "No"
           },
           className: "noButtonStyle",
-        }
-      ]
+        },
+      ],
     });
   };
 
   const handleSearch = () => {
     const trimmedSearchTerm = searchTerm.trim().toLowerCase();
-    
-    if (trimmedSearchTerm === '') {
-      fetchUsers(); // Reset to show all users
+
+    if (trimmedSearchTerm === "") {
+      fetchUsers();
       return;
     }
-  
-    const filteredUsers = users.filter(user => 
-      (user.first_name?.toLowerCase().includes(trimmedSearchTerm) ?? false) ||
-      (user.last_name?.toLowerCase().includes(trimmedSearchTerm) ?? false) ||
-      (user.email?.toLowerCase().includes(trimmedSearchTerm) ?? false)
+
+    const filteredUsers = users.filter(
+      (user) =>
+        (user.first_name?.toLowerCase().includes(trimmedSearchTerm) ??
+          false) ||
+        (user.last_name?.toLowerCase().includes(trimmedSearchTerm) ?? false) ||
+        (user.email?.toLowerCase().includes(trimmedSearchTerm) ?? false)
     );
     setUsers(filteredUsers);
   };
@@ -156,7 +157,9 @@ export default function ManageUsers() {
       </div>
       <section className="holder">
         <div className="intro">
-          <h2>Hello {user && <span>{user.first_name}</span>}</h2>
+          <h2>
+            Hello {user && <span>{user.first_name}</span>}
+          </h2>
           <p>Manage your booking experience</p>
         </div>
         <div className="intro_box">
@@ -182,7 +185,7 @@ export default function ManageUsers() {
         <div style={{ display: "flex", alignItems: "center" }}>
           <input
             type="text"
-            placeholder="Search by user name or email"
+            placeholder="Search by email"
             className="search_text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -202,7 +205,9 @@ export default function ManageUsers() {
             <div className="row_item_2">
               <div>
                 <div className="title_1">Name</div>
-                <div className="light-text">{`${user.first_name} ${user.last_name}`}</div>
+                <div className="light-text">
+                  {`${user.first_name} ${user.last_name}`}
+                </div>
               </div>
               <div>
                 <div className="title_1">Account Type</div>
@@ -222,25 +227,45 @@ export default function ManageUsers() {
               </div>
               <div>
                 <div className="title_1">Join Date</div>
-                <div className="light-text">{new Date(user.date_joined).toLocaleDateString()}</div>
+                <div className="light-text">
+                  {new Date(user.date_joined).toLocaleDateString()}
+                </div>
+              </div>
+              <div className="dat">
+             
+                <br />
+                {user.governmentIdImages?.length > 0 ? (
+                  <a
+                    href={`https://smashapartments.com/uploads/${user.governmentIdImages[0].media_name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link btn_44"
+                  >
+                    view uploaded id
+                  </a>
+                ) : (
+                  <span className="light-text">No ID uploaded</span>
+                )}
               </div>
             </div>
             <br />
             <div className="row_item_2">
               <div>
-                <select 
-                  className="select" 
+                <select
+                  className="select"
                   value={user.status}
-                  onChange={(e) => handleStatusChange(user._id, e.target.value)}
+                  onChange={(e) =>
+                    handleStatusChange(user._id, e.target.value)
+                  }
                 >
                   <option value="active">active</option>
                   <option value="suspended">suspended</option>
+                  <option value="inactive">inactive</option>
                 </select>
               </div>
-         
+             
+           
             </div>
-
-
           </div>
         ))}
       </section>
