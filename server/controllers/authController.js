@@ -30,17 +30,17 @@ const crypto = require("crypto");
 const Nodemailer = require("nodemailer");
 const { MailtrapTransport } = require("mailtrap");
 
-const TOKEN = "a52eb352bda326c835d047cfdb711bd1";
+const TOKEN = "1a892bf4ba730f68ff27f85fee1e8089";
 
 const transport = Nodemailer.createTransport(
   MailtrapTransport({
     token: TOKEN,
-    testInboxId: 3144266,
+    testInboxId: 3268665,
   })
 );
 const sender = {
-  address: "mailtrap@smashapartments.com",
-  name: "Smash Apartments",
+  address: "hello@example.com",
+  name: "Smash apartments",
 };
 
 const test = (req, res) => {
@@ -53,12 +53,10 @@ const updateStatus = async (req, res) => {
   try {
     let updateResult;
 
-    // Validate the listing type
     if (!["stay", "rental", "office", "service"].includes(type)) {
       return res.status(400).json({ message: "Invalid listing type" });
     }
 
-    // Update the listing status based on the type
     switch (type) {
       case "stay":
         updateResult = await StayListing.findByIdAndUpdate(
@@ -92,12 +90,10 @@ const updateStatus = async (req, res) => {
         return res.status(400).json({ message: "Invalid listing type" });
     }
 
-    // If no listing was found to update
     if (!updateResult) {
       return res.status(404).json({ message: "Listing not found" });
     }
 
-    // Successfully updated the listing status
     res.json({ message: "Status updated successfully", listing: updateResult });
   } catch (error) {
     console.error("Error updating status:", error);
@@ -543,10 +539,10 @@ const getRentalDetails = async (req, res) => {
   try {
     const { id } = req.params; // Get rental ID from request parameters
 
-    // Fetch rental data by ID
-    const rental = await CarRental.findById(id).lean();
+    // Fetch rental data by ID, ensuring it's approved and active
+    const rental = await CarRental.findOne({ _id: id, approved: true, status: 'active' }).lean();
     if (!rental) {
-      return res.status(404).json({ error: "Car rental listing not found" });
+      return res.status(404).json({ error: "Car rental listing not found or is inactive/unapproved" });
     }
 
     // Fetch associated images
@@ -587,6 +583,7 @@ const getRentalDetails = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch rental data" });
   }
 };
+
 
 const getRentals = async (req, res) => {
   try {
@@ -644,6 +641,9 @@ const getRentals = async (req, res) => {
 
     // Add filter for ratings
     if (ratings) filters.ratings = { $gte: Number(ratings) };
+    
+    filters.status = "active";
+    filters.approved = true;
 
     let rentals = await CarRental.find(filters)
       .skip(Number(offset) || 0)
@@ -652,7 +652,7 @@ const getRentals = async (req, res) => {
 
     if (rentals.length === 0) {
       // If no rentals are found, fetch without filters
-      rentals = await CarRental.find()
+      rentals = await CarRental.find({status: "active", approved: true})
         .skip(Number(offset) || 0)
         .limit(Number(limit) || 10)
         .lean();
@@ -768,6 +768,13 @@ const reserveAndBookPickup = async (req, res) => {
       arrivalTime: arrivalTime,
       totalAmount: totalPrice,
     });
+    await Adminactions.create({
+      userId: user._id,
+      dataId: newServiceBooking._id,
+      message: "A new pickup service booking has been created. Review and pay vendor.",
+      type: "booking",
+      status: "pending",
+    });
     await sendNewBookingNotificationToOwnerPickup(serviceId);
     res.status(201).json({
       message:
@@ -791,11 +798,10 @@ const getPickupData = async (req, res) => {
   try {
     const { id } = req.params; // Get service ID from request parameters
 
-    // Fetch service data by ID
-    const service = await Service.findById(id).lean();
-
+    // Fetch service data by ID, ensuring it's approved and active
+    const service = await Service.findOne({ _id: id, approved: true, status: 'active' }).lean();
     if (!service) {
-      return res.status(404).json({ error: "Pickup service not found" });
+      return res.status(404).json({ error: "Pickup service not found or is inactive/unapproved" });
     }
 
     // Fetch associated images
@@ -838,6 +844,7 @@ const getPickupData = async (req, res) => {
   }
 };
 
+
 const getPickups = async (req, res) => {
   try {
     const {
@@ -849,14 +856,13 @@ const getPickups = async (req, res) => {
       maxPrice,
       availableFrom,
       availableTo,
-      ratings, // Added for rating filter
+      ratings,
       limit,
       offset,
     } = req.query;
 
     const filters = {};
 
-    // Add case-insensitive filter for airport
     if (airport) {
       filters.$or = [
         { serviceName: { $regex: new RegExp(airport, "i") } },
@@ -864,41 +870,37 @@ const getPickups = async (req, res) => {
       ];
     }
 
-    // Add filter for car make and model
     if (carMakeModel) {
       filters.carMakeModel = { $regex: new RegExp(carMakeModel, "i") };
     }
 
-    // Add filters for extra luggage and waiting time
     if (extraLuggage) filters.extraLuggage = extraLuggage === "true";
     if (waitingTime)
       filters.waitingTime = { $regex: new RegExp(waitingTime, "i") };
 
-    // Add filters for price (using pickupPrice)
     if (minPrice) filters.pickupPrice = { $gte: Number(minPrice) };
     if (maxPrice) {
       filters.pickupPrice = filters.pickupPrice || {};
       filters.pickupPrice.$lte = Number(maxPrice);
     }
 
-    // Add filters for availability
     if (availableFrom)
       filters.availableFrom = { $lte: new Date(availableFrom) };
     if (availableTo) filters.availableTo = { $gte: new Date(availableTo) };
-
+    filters.status = "active";
+    filters.approved = true;
     let pickups = await Service.find(filters)
       .skip(Number(offset) || 0)
       .limit(Number(limit) || 10)
       .lean();
 
     if (pickups.length === 0) {
-      pickups = await Service.find()
+      pickups = await Service.find({status: "active", approved: true})
         .skip(Number(offset) || 0)
         .limit(Number(limit) || 10)
         .lean();
     }
 
-    // Calculate average rating and count of reviews for each pickup and add images
     const pickupsWithDetails = await Promise.all(
       pickups.map(async (pickup) => {
         const images = await MediaTag.find({ listing_id: pickup._id }).lean();
@@ -1005,25 +1007,23 @@ const getCurrentPickups = async (req, res) => {
 
 const getCoOfficeData = async (req, res) => {
   try {
-    const { id } = req.params; // Get cooffice ID from request parameters
+    const { id } = req.params; 
 
-    // Fetch cooffice data by ID
-    const cooffice = await OfficeSpace.findById(id).lean();
+    // Find cooffice by ID, and check if it is approved and has active status
+    const cooffice = await OfficeSpace.findOne({ _id: id, approved: true, status: 'active' }).lean();
     if (!cooffice) {
-      return res.status(404).json({ error: "CoOffice listing not found" });
+      return res.status(404).json({ error: "CoOffice listing not found or is inactive/unapproved" });
     }
 
-    // Fetch associated images
     const images = await MediaTag.find({ listing_id: id }).lean();
 
-    // Fetch review data: calculate average rating and review count for the cooffice
     const reviewData = await Reviews.aggregate([
-      { $match: { listingId: cooffice._id } }, // Match reviews for the specific cooffice
+      { $match: { listingId: cooffice._id } },
       {
         $group: {
           _id: "$listing_id",
-          averageRating: { $avg: { $toDouble: "$rating" } }, // Calculate average rating
-          reviewCount: { $sum: 1 }, // Count the number of reviews
+          averageRating: { $avg: { $toDouble: "$rating" } }, 
+          reviewCount: { $sum: 1 }, 
         },
       },
     ]);
@@ -1051,6 +1051,7 @@ const getCoOfficeData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch cooffice data" });
   }
 };
+
 
 const PendingActions = async (req, res) => {
   try {
@@ -1564,17 +1565,24 @@ const usersJoiningOverTime = async (req, res) => {
   }
 };
 
+
 const updateUserStatus = async (req, res) => {
   const { userId, status } = req.body;
+
   try {
     const user = await User.findByIdAndUpdate(
       userId,
       { status },
       { new: true }
     );
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Send email notification based on the new status
+    await sendUserStatusEmail(user.email, user.first_name, status);
+
     res.json({ message: "User status updated successfully", user });
   } catch (error) {
     res
@@ -1582,6 +1590,63 @@ const updateUserStatus = async (req, res) => {
       .json({ message: "Error updating user status", error: error.message });
   }
 };
+
+const sendUserStatusEmail = async (email, firstName, status) => {
+  const subject = status === 'active' ? 'Your Account Has Been Reactivated' : 'Your Account Has Been Suspended';
+  const htmlTemplate = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${subject}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Montserrat', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <header style="background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 2px solid #221f60;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="100px" viewBox="0 0 1000 1000" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd">
+            <!-- SVG path data here -->
+        </svg>
+    </header>
+    
+    <main style="padding: 20px;">
+        <h1 style="color: #221f60; font-family: 'Montserrat', Arial, sans-serif; font-weight: 700;">${subject}</h1>
+        <p>Hello, ${firstName}</p>
+        <p>${status === 'active' ? 'We are pleased to inform you that your account has been reactivated.' : 'We regret to inform you that your account has been suspended.'}</p>
+        <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+        <p>The smashapartments.com Team</p>
+    </main>
+    
+    <footer style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
+        <p>This email is from smashapartments.com regarding your account status.</p>
+        <p>For support, please contact us at: <a href="mailto:support@smashapartments.com" style="color: #ff8c00;">support@smashapartments.com</a></p>
+        <p>&copy; 2024 smashapartments.com. All rights reserved.</p>
+        <p><a href="#" style="color: #ff8c00;">Privacy Policy</a> | <a href="#" style="color: #ff8c00;">Terms of Service</a></p>
+    </footer>
+</body>
+</html>
+  `;
+
+  const mailOptions = {
+    from: sender,
+    to: [email],
+    subject,
+    text: `Hello ${firstName}, ${status === 'active' ? 'Your account has been reactivated.' : 'Your account has been suspended.'}`,
+    html: htmlTemplate,
+    category: "Account Status",
+    sandbox: true,
+  };
+
+  try {
+    const result = await transport.sendMail(mailOptions);
+    console.log("User status email sent successfully:", result);
+  } catch (error) {
+    console.error("Error sending user status email:", error);
+    throw error;
+  }
+};
+
+
 
 const MakePayout = async (req, res) => {
   try {
@@ -1623,15 +1688,13 @@ const MakePayout = async (req, res) => {
   }
 };
 const sendPayoutNotificationToVendor = async (payoutId) => {
-  // Fetch payout with populated booking details
+
   const payout = await VendorPayouts.findById(payoutId).lean();
   
-  // Fetch vendor details
   const vendor = await User.findById(payout.vendor).lean();
   const vendorEmail = vendor.email;
   const vendorName = vendor.first_name;
 
-  // Format the date nicely
   const formattedDate = new Date(payout.date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -3445,6 +3508,7 @@ const verifyPaymentAndBook = async (req, res) => {
       paystackResponse.data.status !== true ||
       paystackResponse.data.data.status !== "success"
     ) {
+      
       return res.status(400).json({ error: "Payment verification failed" });
     }
 
@@ -3477,6 +3541,13 @@ const verifyPaymentAndBook = async (req, res) => {
       totalAmount: final,
     });
     await sendNewBookingNotificationToOwner(listingId);
+    await Adminactions.create({
+      userId: user._id,
+      dataId: newBooking._id,
+      message: "A new stays booking has been created. Review and pay vendor.",
+      type: "booking",
+      status: "pending",
+    });
     res
       .status(201)
       .json({ message: "Payment verified and booking created successfully" });
@@ -3658,6 +3729,13 @@ const verifyPaymentAndBookCooffice = async (req, res) => {
       totalAmount: final,
     });
     await sendNewBookingNotificationToOwnerOffice(officeId);
+    await Adminactions.create({
+      userId: user._id,
+      dataId: newCoofficeBooking._id,
+      message: "A new cooffice booking has been created. Review and pay vendor.",
+      type: "booking",
+      status: "pending",
+    });
     res.status(201).json({
       message: "Payment verified and cooffice booking created successfully",
     });
@@ -3777,9 +3855,10 @@ const getListingData = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const listing = await StayListing.findById(id).lean();
+    // Find listing by ID and check if it is approved and has active status
+    const listing = await StayListing.findOne({ _id: id, approved: true, status: 'active' }).lean();
     if (!listing) {
-      return res.status(404).json({ error: "Listing not found" });
+      return res.status(404).json({ error: "Listing not found or is inactive/unapproved" });
     }
 
     const images = await MediaTag.find({ listing_id: id }).lean();
@@ -3816,6 +3895,7 @@ const getListingData = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch listing data" });
   }
 };
+
 const approveListing = async (req, res) => {
   const { listingId, type } = req.body;
 
@@ -3991,7 +4071,9 @@ const getCooffices = async (req, res) => {
     if (availableTo) filters.available_to = { $gte: new Date(availableTo) };
     if (minDesks) filters.number_of_desks = { $gte: Number(minDesks) };
     if (minSize) filters.size_of_office = { $gte: Number(minSize) };
-
+   
+    filters.status = "active";
+    filters.approved = true;
     // Initial fetch of cooffice listings based on filters
     let cooffices = await OfficeSpace.find(filters)
       .skip(Number(offset) || 0)
@@ -3999,7 +4081,7 @@ const getCooffices = async (req, res) => {
       .lean();
 
     if (cooffices.length === 0) {
-      cooffices = await OfficeSpace.find()
+      cooffices = await OfficeSpace.find({status: "active", approved: true})
         .skip(Number(offset) || 0)
         .limit(Number(limit) || 10)
         .lean();
@@ -4074,7 +4156,6 @@ const getListings = async (req, res) => {
 
     const filters = {};
 
-    // Add case-insensitive filter for location
     if (propertyType) {
       filters.property_type = propertyType;
     }
@@ -4083,12 +4164,10 @@ const getListings = async (req, res) => {
       filters.city = { $regex: new RegExp(location, "i") };
     }
 
-    // Date filter
     if (date) {
       filters.available_from = { $lte: new Date(date) };
     }
 
-    // People, rooms, and amenities filters
     if (people) {
       filters.maximum_occupancy = { $gte: Number(people) };
     }
@@ -4102,7 +4181,6 @@ const getListings = async (req, res) => {
     if (parking) filters.parking = parking === "true";
     if (gym) filters.gym = gym === "true";
 
-    // Price filters
     if (minPrice) filters.price_per_night = { $gte: Number(minPrice) };
     if (maxPrice) {
       filters.price_per_night = filters.price_per_night || {};
@@ -4110,8 +4188,8 @@ const getListings = async (req, res) => {
     }
 
     filters.status = "active";
+    filters.approved = true;
 
-    // Find listings based on filters
     let listings = await StayListing.find(filters)
       .skip(offset)
       .limit(limit)
@@ -4119,7 +4197,7 @@ const getListings = async (req, res) => {
 
     // If no listings are found, fetch without filters
     if (listings.length === 0) {
-      listings = await StayListing.find({ status: "active" })
+      listings = await StayListing.find({ status: "active", approved: true })
         .skip(offset)
         .limit(limit)
         .lean();
@@ -4472,7 +4550,13 @@ const createRental = async (req, res) => {
         await mediaTag.save();
       }
     }
-
+    await Adminactions.create({
+      userId: user._id,
+      dataId: newRental._id,
+      message: "A new rental service listing has been created. Review and approve",
+      type: "listing_approval",
+      status: "pending",
+    });
     res
       .status(201)
       .json({ message: "Rental created successfully", rental: newRental });
@@ -5005,6 +5089,7 @@ const getRentalListing = async (req, res) => {
 };
 
 const createStayListing = async (req, res) => {
+  
   try {
     const { token } = req.cookies;
     if (!token) {
@@ -5095,7 +5180,13 @@ const createStayListing = async (req, res) => {
         await mediaTag.save();
       }
     }
-
+    await Adminactions.create({
+      userId: user._id,
+      dataId: newStayListing._id,
+      message: "A new stays listing has been created. Review and approve",
+      type: "listing_approval",
+      status: "pending",
+    });
     res.status(201).json({
       message: "Stay listing created successfully",
       stay_listing: newStayListing,
@@ -5375,7 +5466,13 @@ const createOfficeListing = async (req, res) => {
         await mediaTag.save();
       }
     }
-
+    await Adminactions.create({
+      userId: user._id,
+      dataId: newOfficeListing._id,
+      message: "A new office listing has been created. Review and approve",
+      type: "listing_approval",
+      status: "pending",
+    });
     res.status(201).json({
       message: "Office listing created successfully",
       office_listing: newOfficeListing,
@@ -5822,6 +5919,12 @@ const loginUser = async (req, res) => {
           "Please verify your email. Check your inbox for the verification code.",
       });
     }
+    if (user.status == "suspended") {
+      return res.json({
+        error:
+          "This account was suspended.",
+      });
+    }
 
     // Compare the password
     const isMatch = await comparePassword(password, user.password);
@@ -5885,7 +5988,12 @@ const loginPartner = async (req, res) => {
           "Please verify your email. Check your inbox for the verification code.",
       });
     }
-
+    if (user.status == "suspended") {
+      return res.json({
+        error:
+          "This account was suspended.",
+      });
+    }
     // Compare the password
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
@@ -6076,6 +6184,13 @@ const createService = async (req, res) => {
         await mediaTag.save();
       }
     }
+    await Adminactions.create({
+      userId: user._id,
+      dataId: newService._id,
+      message: "A new pickup service listing has been created. Review and approve",
+      type: "listing_approval",
+      status: "pending",
+    });
     res
       .status(201)
       .json({ message: "Service created successfully", service: newService });

@@ -29,13 +29,12 @@ export default function Stays() {
   const popoverRef1 = useRef(null);
   const popoverRef2 = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
-  // State for sa_search_1 form inputs
+
   const [searchLocation, setSearchLocation] = useState("");
   const [searchDate, setSearchDate] = useState("");
   const [searchPeople, setSearchPeople] = useState("");
   const [searchRooms, setSearchRooms] = useState("");
 
-  // Extract query params from URL
   const params = new URLSearchParams(locationSearch.search);
   const locationParam = params.get("location");
   const date = params.get("date");
@@ -120,14 +119,13 @@ export default function Stays() {
 
   useEffect(() => {
     if (Object.keys(filters).length > 0) {
-      // If filters are applied
       const fetchListingsWithFilters = async () => {
         try {
           const response = await axios.get("/getlistings", {
-            params: { ...filters, limit: 5, offset: 0 }, // Fetch 5 listings at a time
+            params: { ...filters, limit: 5, offset: 0 }, 
           });
           setListings(response.data);
-          setHasMore(response.data.length === 5); // Check if there are more listings
+          setHasMore(response.data.length === 5);
         } catch (error) {
           console.error("Error fetching listings with filters:", error);
         }
@@ -135,9 +133,9 @@ export default function Stays() {
 
       fetchListingsWithFilters();
     } else {
-      // If all filters are removed, reset to initial listings
-      setListings(initialListings); // Reset listings to initial value
-      setOffset(0); // Reset offset to 0
+
+      setListings(initialListings); 
+      setOffset(0); 
     }
   }, [filters]);
 
@@ -495,8 +493,6 @@ export default function Stays() {
         </select>
           <div className="button b2" onClick={handleSearch}>Search</div>
         </div>
-
-          {/* Detailed Search Container */}
      
           <div className="listings_list">
             {listings.map((listing) => (
