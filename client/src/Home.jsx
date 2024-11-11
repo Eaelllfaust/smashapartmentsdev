@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -243,10 +244,10 @@ export default function Home() {
           <img src="assets/bg (1).png" alt="" />
         </div>
         <div className="shade_item">
-          <img src="assets/bg (4).png" alt="" />
+          <img src={"assets/bg (4).png"} alt="" />
         </div>
         <div className="shade_item">
-          <img src="assets/bg (3).png" alt="" />
+          <img src={"assets/bg (3).png"} alt="" />
         </div>
       </div>
       <br />
@@ -453,7 +454,7 @@ export default function Home() {
               <div className="list_node" key={listing._id}>
                 <div className="list_1">
                   <img
-                    src={`http://localhost:8000/uploads/${listing.images[0]?.media_name}`}
+                    src={`https://smashapartments.com/uploads/${listing.images[0]?.media_name}`}
                     alt={listing.property_name}
                   />
                 </div>

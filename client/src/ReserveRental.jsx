@@ -211,7 +211,7 @@ export default function ReserveRental() {
                   <img
                     src={
                       rental.images?.[0]?.url
-                        ? `http://localhost:8000/${rental.images[0].url}`
+                        ? `https://smashapartments.com/uploads/${rental.images[0].media_name}`
                         : "/assets/bg (3).png"
                     }
                     alt={rental.carNameModel || "Car Rental Image"}

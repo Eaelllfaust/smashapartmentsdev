@@ -344,7 +344,7 @@ export default function Rentals() {
                 <div className="list_1">
                   <img
                     src={
-                      `http://localhost:8000/uploads/${rental.images[0].media_name}` ||
+                      `https://smashapartments.com/uploads/${rental.images[0].media_name}` ||
                       "assets/bg (3).png"
                     }
                     alt={rental.carNameModel}

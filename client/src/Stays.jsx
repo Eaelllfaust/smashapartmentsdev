@@ -7,15 +7,15 @@ import { Link } from "react-router-dom";
 import { toast } from 'react-toastify'; // Import React Toastify
 
 export default function Stays() {
-  const locationSearch = useLocation(); // Get the current location object to access query params
+  const locationSearch = useLocation();
   const navigate = useNavigate();
   const [propertyType, setPropertyType] = useState("");
   const [listings, setListings] = useState([]);
-  const [initialListings, setInitialListings] = useState([]); // Store initial listings
-  const [filters, setFilters] = useState({}); // Initialize filters as an empty object
-  const [hasMore, setHasMore] = useState(true); // Flag to indicate if there are more listings
-  const [loading, setLoading] = useState(false); // Flag to indicate if the component is loading more listings
-  const [offset, setOffset] = useState(0); // Offset for pagination
+  const [initialListings, setInitialListings] = useState([]);
+  const [filters, setFilters] = useState({});
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false)
+  const [offset, setOffset] = useState(0);
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [dateRange, setDateRange] = useState([null, null]);
@@ -504,7 +504,7 @@ export default function Stays() {
                 
                 <div className="list_1">
                   <img
-                    src={`http://localhost:8000/uploads/${listing.images[0]?.media_name}`}
+                    src={`https://smashapartments.com/uploads/${listing.images[0]?.media_name}`}
                     alt={listing.property_name}
                   />
                 </div>

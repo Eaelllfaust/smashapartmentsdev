@@ -5,10 +5,10 @@ import { UserContext } from "../../context/userContext";
 import axios from "axios"; 
 
 export default function HomeAdmin() {
-  const { user, loading } = useContext(UserContext); // Get the user and loading state from context
+  const { user, loading } = useContext(UserContext); 
   const navigate = useNavigate();
   const [upcomingBookings, setUpcomingBookings] = useState(0);
-  const [activeUsers, setActiveUsers] = useState(0); // State for active users
+  const [activeUsers, setActiveUsers] = useState(0); 
   
   useEffect(() => {
     if (loading) return;

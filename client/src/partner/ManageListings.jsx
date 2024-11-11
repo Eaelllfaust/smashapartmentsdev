@@ -136,7 +136,7 @@ export default function ManageListings() {
             return (
               <div className="row_item stay" key={listing._id}>
                 <img
-                  src={`http://localhost:8000/uploads/${listing.images[0].media_name}`}
+                  src={`https://smashapartments.com/uploads/${listing.images[0].media_name}`}
                   alt="Stay"
                 />
                 <div>{listing.property_name}</div>
@@ -172,7 +172,7 @@ export default function ManageListings() {
             return (
               <div className="row_item rental" key={listing._id}>
                 <img
-                  src={`http://localhost:8000/uploads/${listing.images[0].media_name}`}
+                  src={`https://smashapartments.com/uploads/${listing.images[0].media_name}`}
                   alt="Rental"
                 />
                 <div>{listing.carNameModel}</div>
@@ -208,7 +208,7 @@ export default function ManageListings() {
             return (
               <div className="row_item office" key={listing._id}>
                 <img
-                  src={`http://localhost:8000/uploads/${listing.images[0].media_name}`}
+                  src={`https://smashapartments.com/uploads/${listing.images[0].media_name}`}
                   alt="Office"
                 />
                 <div>{listing.office_space_name}</div>
@@ -244,7 +244,7 @@ export default function ManageListings() {
             return (
               <div className="row_item service" key={listing._id}>
                 <img
-                  src={`http://localhost:8000/uploads/${listing.images[0].media_name}`}
+                  src={`https://smashapartments.com/uploads/${listing.images[0].media_name}`}
                   alt="Service"
                 />
                 <div>{listing.serviceName}</div>

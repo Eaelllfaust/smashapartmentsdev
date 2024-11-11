@@ -230,7 +230,7 @@ export default function ReserveStays() {
                   <img
                     src={
                       stayDetails.images?.[0]?.url
-                        ? `http://localhost:8000/${stayDetails.images[0].url}`
+                        ? `https://smashapartments.com/uploads/${stayDetails.images[0].media_name}`
                         : "/assets/properties (2).png"
                     }
                     alt={stayDetails.property_name || "Property Image"}

@@ -1,0 +1,170 @@
+"filename", "language", "JavaScript JSX", "CSS", "JavaScript", "XML", "JSON", "HTML", "Markdown", "Properties", "comment", "blank", "total"
+"c:\Users\HP\Desktop\Smash apartments\client\README.md", "Markdown", 0, 0, 0, 0, 0, 0, 5, 0, 0, 4, 9
+"c:\Users\HP\Desktop\Smash apartments\client\context\userContext.jsx", "JavaScript JSX", 26, 0, 0, 0, 0, 0, 0, 0, 0, 6, 32
+"c:\Users\HP\Desktop\Smash apartments\client\eslint.config.js", "JavaScript", 0, 0, 37, 0, 0, 0, 0, 0, 0, 2, 39
+"c:\Users\HP\Desktop\Smash apartments\client\index.html", "HTML", 0, 0, 0, 0, 0, 40, 0, 0, 1, 9, 50
+"c:\Users\HP\Desktop\Smash apartments\client\package-lock.json", "JSON", 0, 0, 0, 0, 7600, 0, 0, 0, 0, 1, 7601
+"c:\Users\HP\Desktop\Smash apartments\client\package.json", "JSON", 0, 0, 0, 0, 53, 0, 0, 0, 0, 1, 54
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\4 Upcoming reservations.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\account.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\check.svg", "XML", 0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 5
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\cil_flight-takeoff.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\drop_icon.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\emojione-monotone_houses.svg", "XML", 0, 0, 0, 7, 0, 0, 0, 0, 0, 1, 8
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\facebook.svg", "XML", 0, 0, 0, 6, 0, 0, 0, 0, 0, 1, 7
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\flight_icon.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\flowbite_x-solid.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\goto.svg", "XML", 0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 5
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\help.svg", "XML", 0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 5
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\heroicons_home.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\ic_outline-local-hotel.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\mdi_hotel-outline.svg", "XML", 0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 5
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\mdi_instagram.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\payment.svg", "XML", 0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 5
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\ph_building-office.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\ph_car.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\preference.svg", "XML", 0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 5
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\rating.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\report.svg", "XML", 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\solar_user-outline.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\tabler_calendar.svg", "XML", 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 4
+"c:\Users\HP\Desktop\Smash apartments\client\public\assets\time.svg", "XML", 0, 0, 0, 4, 0, 0, 0, 0, 0, 1, 5
+"c:\Users\HP\Desktop\Smash apartments\client\public\fin.svg", "XML", 0, 0, 0, 7, 0, 0, 0, 0, 0, 1, 8
+"c:\Users\HP\Desktop\Smash apartments\client\public\vite.svg", "XML", 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\HP\Desktop\Smash apartments\client\src\About.jsx", "JavaScript JSX", 52, 0, 0, 0, 0, 0, 0, 0, 0, 3, 55
+"c:\Users\HP\Desktop\Smash apartments\client\src\AiportPickups.jsx", "JavaScript JSX", 230, 0, 0, 0, 0, 0, 0, 0, 0, 15, 245
+"c:\Users\HP\Desktop\Smash apartments\client\src\App.jsx", "JavaScript JSX", 204, 0, 0, 0, 0, 0, 0, 0, 3, 15, 222
+"c:\Users\HP\Desktop\Smash apartments\client\src\Authme.jsx", "JavaScript JSX", 80, 0, 0, 0, 0, 0, 0, 0, 0, 9, 89
+"c:\Users\HP\Desktop\Smash apartments\client\src\AuthmeVendor.jsx", "JavaScript JSX", 80, 0, 0, 0, 0, 0, 0, 0, 0, 9, 89
+"c:\Users\HP\Desktop\Smash apartments\client\src\Cooffice.jsx", "JavaScript JSX", 450, 0, 0, 0, 0, 0, 0, 0, 1, 22, 473
+"c:\Users\HP\Desktop\Smash apartments\client\src\CoofficeDetails.jsx", "JavaScript JSX", 284, 0, 0, 0, 0, 0, 0, 0, 0, 11, 295
+"c:\Users\HP\Desktop\Smash apartments\client\src\CreateAccount.jsx", "JavaScript JSX", 73, 0, 0, 0, 0, 0, 0, 0, 0, 7, 80
+"c:\Users\HP\Desktop\Smash apartments\client\src\CreateDetails.jsx", "JavaScript JSX", 212, 0, 0, 0, 0, 0, 0, 0, 3, 21, 236
+"c:\Users\HP\Desktop\Smash apartments\client\src\CreatePassword.jsx", "JavaScript JSX", 95, 0, 0, 0, 0, 0, 0, 0, 1, 8, 104
+"c:\Users\HP\Desktop\Smash apartments\client\src\Faq.jsx", "JavaScript JSX", 97, 0, 0, 0, 0, 0, 0, 0, 0, 3, 100
+"c:\Users\HP\Desktop\Smash apartments\client\src\Home.jsx", "JavaScript JSX", 600, 0, 0, 0, 0, 0, 0, 0, 2, 45, 647
+"c:\Users\HP\Desktop\Smash apartments\client\src\ImageRow.jsx", "JavaScript JSX", 191, 0, 0, 0, 0, 0, 0, 0, 1, 15, 207
+"c:\Users\HP\Desktop\Smash apartments\client\src\ListProperty.jsx", "JavaScript JSX", 70, 0, 0, 0, 0, 0, 0, 0, 0, 5, 75
+"c:\Users\HP\Desktop\Smash apartments\client\src\MapModal.jsx", "JavaScript JSX", 164, 0, 0, 0, 0, 0, 0, 0, 4, 22, 190
+"c:\Users\HP\Desktop\Smash apartments\client\src\PartnerDetails.jsx", "JavaScript JSX", 223, 0, 0, 0, 0, 0, 0, 0, 3, 22, 248
+"c:\Users\HP\Desktop\Smash apartments\client\src\PartnerPassword.jsx", "JavaScript JSX", 103, 0, 0, 0, 0, 0, 0, 0, 0, 10, 113
+"c:\Users\HP\Desktop\Smash apartments\client\src\PickupDetail.jsx", "JavaScript JSX", 325, 0, 0, 0, 0, 0, 0, 0, 0, 13, 338
+"c:\Users\HP\Desktop\Smash apartments\client\src\Pickups.jsx", "JavaScript JSX", 552, 0, 0, 0, 0, 0, 0, 0, 3, 20, 575
+"c:\Users\HP\Desktop\Smash apartments\client\src\Privacy.jsx", "JavaScript JSX", 90, 0, 0, 0, 0, 0, 0, 0, 0, 1, 91
+"c:\Users\HP\Desktop\Smash apartments\client\src\Recovery.jsx", "JavaScript JSX", 72, 0, 0, 0, 0, 0, 0, 0, 0, 3, 75
+"c:\Users\HP\Desktop\Smash apartments\client\src\RentalDetails.jsx", "JavaScript JSX", 270, 0, 0, 0, 0, 0, 0, 0, 0, 11, 281
+"c:\Users\HP\Desktop\Smash apartments\client\src\Rentals.jsx", "JavaScript JSX", 418, 0, 0, 0, 0, 0, 0, 0, 2, 16, 436
+"c:\Users\HP\Desktop\Smash apartments\client\src\ReserveCooffice.jsx", "JavaScript JSX", 349, 0, 0, 0, 0, 0, 0, 0, 4, 26, 379
+"c:\Users\HP\Desktop\Smash apartments\client\src\ReservePickup.jsx", "JavaScript JSX", 333, 0, 0, 0, 0, 0, 0, 0, 1, 20, 354
+"c:\Users\HP\Desktop\Smash apartments\client\src\ReserveRental.jsx", "JavaScript JSX", 388, 0, 0, 0, 0, 0, 0, 0, 5, 25, 418
+"c:\Users\HP\Desktop\Smash apartments\client\src\ReserveStays.jsx", "JavaScript JSX", 462, 0, 0, 0, 0, 0, 0, 0, 6, 32, 500
+"c:\Users\HP\Desktop\Smash apartments\client\src\SecurityLevyInfo.jsx", "JavaScript JSX", 101, 0, 0, 0, 0, 0, 0, 0, 1, 8, 110
+"c:\Users\HP\Desktop\Smash apartments\client\src\SiginAdmin.jsx", "JavaScript JSX", 91, 0, 0, 0, 0, 0, 0, 0, 0, 8, 99
+"c:\Users\HP\Desktop\Smash apartments\client\src\Signin.jsx", "JavaScript JSX", 102, 0, 0, 0, 0, 0, 0, 0, 3, 9, 114
+"c:\Users\HP\Desktop\Smash apartments\client\src\SigninPartner.jsx", "JavaScript JSX", 102, 0, 0, 0, 0, 0, 0, 0, 3, 9, 114
+"c:\Users\HP\Desktop\Smash apartments\client\src\Stays.jsx", "JavaScript JSX", 539, 0, 0, 0, 0, 0, 0, 0, 5, 48, 592
+"c:\Users\HP\Desktop\Smash apartments\client\src\StaysDetails.jsx", "JavaScript JSX", 372, 0, 0, 0, 0, 0, 0, 0, 0, 16, 388
+"c:\Users\HP\Desktop\Smash apartments\client\src\Support.jsx", "JavaScript JSX", 83, 0, 0, 0, 0, 0, 0, 0, 1, 7, 91
+"c:\Users\HP\Desktop\Smash apartments\client\src\Termsofuse.jsx", "JavaScript JSX", 93, 0, 0, 0, 0, 0, 0, 0, 0, 1, 94
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedCooffice.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 3, 117
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedCoofficeBookings.jsx", "JavaScript JSX", 97, 0, 0, 0, 0, 0, 0, 0, 0, 2, 99
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedPickupBookings.jsx", "JavaScript JSX", 97, 0, 0, 0, 0, 0, 0, 0, 0, 2, 99
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedPickups.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 3, 117
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedRentals.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 3, 117
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedRentalsBookings.jsx", "JavaScript JSX", 97, 0, 0, 0, 0, 0, 0, 0, 0, 3, 100
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedStays.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 3, 117
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\DeactivatedStaysBookings.jsx", "JavaScript JSX", 97, 0, 0, 0, 0, 0, 0, 0, 0, 2, 99
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\Email.jsx", "JavaScript JSX", 50, 0, 0, 0, 0, 0, 0, 0, 0, 2, 52
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\GeneralSettings.jsx", "JavaScript JSX", 59, 0, 0, 0, 0, 0, 0, 0, 0, 3, 62
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\HelpMessages.jsx", "JavaScript JSX", 140, 0, 0, 0, 0, 0, 0, 0, 0, 3, 143
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\HomeAdmin.jsx", "JavaScript JSX", 152, 0, 0, 0, 0, 0, 0, 0, 12, 9, 173
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ListingDetailsModal.jsx", "JavaScript JSX", 467, 0, 0, 0, 0, 0, 0, 0, 1, 32, 500
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageAirportBookings.jsx", "JavaScript JSX", 100, 0, 0, 0, 0, 0, 0, 0, 0, 2, 102
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageAirportPickups.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 2, 116
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageBookings.jsx", "JavaScript JSX", 609, 0, 0, 0, 0, 0, 0, 0, 78, 13, 700
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageCooffice.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 3, 117
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageCoofficeBookings.jsx", "JavaScript JSX", 107, 0, 0, 0, 0, 0, 0, 0, 0, 2, 109
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageListings.jsx", "JavaScript JSX", 343, 0, 0, 0, 0, 0, 0, 0, 11, 11, 365
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageRentalBookings.jsx", "JavaScript JSX", 100, 0, 0, 0, 0, 0, 0, 0, 0, 3, 103
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageRentals.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 3, 117
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageReports.jsx", "JavaScript JSX", 267, 0, 0, 0, 0, 0, 0, 0, 1, 23, 291
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageStaysBookings.jsx", "JavaScript JSX", 100, 0, 0, 0, 0, 0, 0, 0, 0, 2, 102
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageStaysListings.jsx", "JavaScript JSX", 114, 0, 0, 0, 0, 0, 0, 0, 0, 3, 117
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\ManageUsers.jsx", "JavaScript JSX", 232, 0, 0, 0, 0, 0, 0, 0, 3, 15, 250
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\PayoutModal.jsx", "JavaScript JSX", 155, 0, 0, 0, 0, 0, 0, 0, 0, 17, 172
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\PendingTasks.jsx", "JavaScript JSX", 121, 0, 0, 0, 0, 0, 0, 0, 0, 8, 129
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\Reports.jsx", "JavaScript JSX", 77, 0, 0, 0, 0, 0, 0, 0, 7, 3, 87
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\RevenueReportGenerator.jsx", "JavaScript JSX", 142, 0, 0, 0, 0, 0, 0, 0, 4, 18, 164
+"c:\Users\HP\Desktop\Smash apartments\client\src\administrator\Settings.jsx", "JavaScript JSX", 66, 0, 0, 0, 0, 0, 0, 0, 0, 2, 68
+"c:\Users\HP\Desktop\Smash apartments\client\src\components\Footer.jsx", "JavaScript JSX", 140, 0, 0, 0, 0, 0, 0, 0, 12, 8, 160
+"c:\Users\HP\Desktop\Smash apartments\client\src\components\LanguageCurrencyModal.jsx", "JavaScript JSX", 300, 0, 0, 0, 0, 0, 0, 0, 2, 22, 324
+"c:\Users\HP\Desktop\Smash apartments\client\src\components\Navbar.jsx", "JavaScript JSX", 368, 0, 0, 0, 0, 0, 0, 0, 4, 17, 389
+"c:\Users\HP\Desktop\Smash apartments\client\src\index.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"c:\Users\HP\Desktop\Smash apartments\client\src\main.jsx", "JavaScript JSX", 12, 0, 0, 0, 0, 0, 0, 0, 0, 3, 15
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\AddAirportPickup.jsx", "JavaScript JSX", 471, 0, 0, 0, 0, 0, 0, 0, 0, 17, 488
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\AddCarRentals.jsx", "JavaScript JSX", 489, 0, 0, 0, 0, 0, 0, 0, 1, 18, 508
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\AddCooffice.jsx", "JavaScript JSX", 661, 0, 0, 0, 0, 0, 0, 0, 0, 17, 678
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\AddListing.jsx", "JavaScript JSX", 106, 0, 0, 0, 0, 0, 0, 0, 0, 4, 110
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\AddStays.jsx", "JavaScript JSX", 572, 0, 0, 0, 0, 0, 0, 0, 0, 33, 605
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\AllInactiveListings.jsx", "JavaScript JSX", 89, 0, 0, 0, 0, 0, 0, 0, 1, 6, 96
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\AllPastBookings.jsx", "JavaScript JSX", 62, 0, 0, 0, 0, 0, 0, 0, 0, 4, 66
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\Editoffice.jsx", "JavaScript JSX", 659, 0, 0, 0, 0, 0, 0, 0, 0, 29, 688
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\Editrental.jsx", "JavaScript JSX", 550, 0, 0, 0, 0, 0, 0, 0, 0, 33, 583
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\Editservice.jsx", "JavaScript JSX", 489, 0, 0, 0, 0, 0, 0, 0, 4, 22, 515
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\Editstays.jsx", "JavaScript JSX", 555, 0, 0, 0, 0, 0, 0, 0, 4, 37, 596
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\Faq.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\Help.jsx", "JavaScript JSX", 62, 0, 0, 0, 0, 0, 0, 0, 0, 3, 65
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\HomaPartner.jsx", "JavaScript JSX", 145, 0, 0, 0, 0, 0, 0, 0, 25, 9, 179
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\ListingDetailsModal.jsx", "JavaScript JSX", 467, 0, 0, 0, 0, 0, 0, 0, 1, 32, 500
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\ManageBookings.jsx", "JavaScript JSX", 473, 0, 0, 0, 0, 0, 0, 0, 0, 11, 484
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\ManageEarnings.jsx", "JavaScript JSX", 78, 0, 0, 0, 0, 0, 0, 0, 0, 1, 79
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\ManageListings.jsx", "JavaScript JSX", 278, 0, 0, 0, 0, 0, 0, 0, 0, 9, 287
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\ManageReviews.jsx", "JavaScript JSX", 59, 0, 0, 0, 0, 0, 0, 0, 0, 2, 61
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\PayoutSettings.jsx", "JavaScript JSX", 125, 0, 0, 0, 0, 0, 0, 0, 1, 7, 133
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\PersonalInfo.jsx", "JavaScript JSX", 175, 0, 0, 0, 0, 0, 0, 0, 5, 10, 190
+"c:\Users\HP\Desktop\Smash apartments\client\src\partner\ProfileSettings.jsx", "JavaScript JSX", 52, 0, 0, 0, 0, 0, 0, 0, 0, 4, 56
+"c:\Users\HP\Desktop\Smash apartments\client\src\style.css", "CSS", 0, 2896, 0, 0, 0, 0, 0, 0, 11, 230, 3137
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\AirportPickups.jsx", "JavaScript JSX", 312, 0, 0, 0, 0, 0, 0, 0, 0, 14, 326
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\CarRentals.jsx", "JavaScript JSX", 276, 0, 0, 0, 0, 0, 0, 0, 0, 15, 291
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\CurrentBookings.jsx", "JavaScript JSX", 340, 0, 0, 0, 0, 0, 0, 0, 0, 14, 354
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\HomeUser.jsx", "JavaScript JSX", 98, 0, 0, 0, 0, 0, 0, 0, 0, 6, 104
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\ManageBookings.jsx", "JavaScript JSX", 72, 0, 0, 0, 0, 0, 0, 0, 0, 9, 81
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\ManageDetails.jsx", "JavaScript JSX", 138, 0, 0, 0, 0, 0, 0, 0, 1, 10, 149
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\ManagePayment.jsx", "JavaScript JSX", 160, 0, 0, 0, 0, 0, 0, 0, 1, 7, 168
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\OfficeSpaces.jsx", "JavaScript JSX", 264, 0, 0, 0, 0, 0, 0, 0, 0, 22, 286
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\PastAirportPickups.jsx", "JavaScript JSX", 100, 0, 0, 0, 0, 0, 0, 0, 0, 3, 103
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\PastBookings.jsx", "JavaScript JSX", 107, 0, 0, 0, 0, 0, 0, 0, 0, 4, 111
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\PastCarRentals.jsx", "JavaScript JSX", 104, 0, 0, 0, 0, 0, 0, 0, 0, 3, 107
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\PastOfficeSpaces.jsx", "JavaScript JSX", 104, 0, 0, 0, 0, 0, 0, 0, 0, 3, 107
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\Preferences.jsx", "JavaScript JSX", 221, 0, 0, 0, 0, 0, 0, 0, 15, 10, 246
+"c:\Users\HP\Desktop\Smash apartments\client\src\user\ReviewModal.jsx", "JavaScript JSX", 266, 0, 0, 0, 0, 0, 0, 0, 1, 30, 297
+"c:\Users\HP\Desktop\Smash apartments\client\vite.config.js", "JavaScript", 0, 0, 5, 0, 0, 0, 0, 0, 1, 2, 8
+"c:\Users\HP\Desktop\Smash apartments\server\.env", "Properties", 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4
+"c:\Users\HP\Desktop\Smash apartments\server\controllers\authController.js", "JavaScript", 0, 0, 5362, 0, 0, 0, 0, 0, 435, 760, 6557
+"c:\Users\HP\Desktop\Smash apartments\server\helpers\auth.js", "JavaScript", 0, 0, 24, 0, 0, 0, 0, 0, 2, 4, 30
+"c:\Users\HP\Desktop\Smash apartments\server\index.js", "JavaScript", 0, 0, 19, 0, 0, 0, 0, 0, 2, 9, 30
+"c:\Users\HP\Desktop\Smash apartments\server\models\adminactions.js", "JavaScript", 0, 0, 21, 0, 0, 0, 0, 0, 0, 3, 24
+"c:\Users\HP\Desktop\Smash apartments\server\models\booking.js", "JavaScript", 0, 0, 22, 0, 0, 0, 0, 0, 0, 3, 25
+"c:\Users\HP\Desktop\Smash apartments\server\models\cooffice.js", "JavaScript", 0, 0, 124, 0, 0, 0, 0, 0, 0, 3, 127
+"c:\Users\HP\Desktop\Smash apartments\server\models\coofficebooking.js", "JavaScript", 0, 0, 39, 0, 0, 0, 0, 0, 0, 2, 41
+"c:\Users\HP\Desktop\Smash apartments\server\models\likeditem.js", "JavaScript", 0, 0, 14, 0, 0, 0, 0, 0, 0, 4, 18
+"c:\Users\HP\Desktop\Smash apartments\server\models\mediatag.js", "JavaScript", 0, 0, 22, 0, 0, 0, 0, 0, 0, 4, 26
+"c:\Users\HP\Desktop\Smash apartments\server\models\newsletter.js", "JavaScript", 0, 0, 13, 0, 0, 0, 0, 0, 0, 3, 16
+"c:\Users\HP\Desktop\Smash apartments\server\models\partnerearning.js", "JavaScript", 0, 0, 30, 0, 0, 0, 0, 0, 0, 2, 32
+"c:\Users\HP\Desktop\Smash apartments\server\models\payment_method.js", "JavaScript", 0, 0, 39, 0, 0, 0, 0, 0, 0, 3, 42
+"c:\Users\HP\Desktop\Smash apartments\server\models\payout.js", "JavaScript", 0, 0, 21, 0, 0, 0, 0, 0, 0, 2, 23
+"c:\Users\HP\Desktop\Smash apartments\server\models\receipts.js", "JavaScript", 0, 0, 17, 0, 0, 0, 0, 0, 0, 4, 21
+"c:\Users\HP\Desktop\Smash apartments\server\models\rentalbookings.js", "JavaScript", 0, 0, 51, 0, 0, 0, 0, 0, 1, 3, 55
+"c:\Users\HP\Desktop\Smash apartments\server\models\rentals.js", "JavaScript", 0, 0, 110, 0, 0, 0, 0, 0, 0, 3, 113
+"c:\Users\HP\Desktop\Smash apartments\server\models\reviews.js", "JavaScript", 0, 0, 18, 0, 0, 0, 0, 0, 0, 3, 21
+"c:\Users\HP\Desktop\Smash apartments\server\models\service.js", "JavaScript", 0, 0, 94, 0, 0, 0, 0, 0, 0, 4, 98
+"c:\Users\HP\Desktop\Smash apartments\server\models\servicebooking.js", "JavaScript", 0, 0, 39, 0, 0, 0, 0, 0, 0, 3, 42
+"c:\Users\HP\Desktop\Smash apartments\server\models\stays_listing.js", "JavaScript", 0, 0, 108, 0, 0, 0, 0, 0, 0, 4, 112
+"c:\Users\HP\Desktop\Smash apartments\server\models\user.js", "JavaScript", 0, 0, 72, 0, 0, 0, 0, 0, 1, 5, 78
+"c:\Users\HP\Desktop\Smash apartments\server\models\usercomplaint.js", "JavaScript", 0, 0, 11, 0, 0, 0, 0, 0, 0, 2, 13
+"c:\Users\HP\Desktop\Smash apartments\server\models\userpreference.js", "JavaScript", 0, 0, 19, 0, 0, 0, 0, 0, 0, 3, 22
+"c:\Users\HP\Desktop\Smash apartments\server\models\vendorpayouts.js", "JavaScript", 0, 0, 30, 0, 0, 0, 0, 0, 0, 3, 33
+"c:\Users\HP\Desktop\Smash apartments\server\package-lock.json", "JSON", 0, 0, 0, 0, 2457, 0, 0, 0, 0, 1, 2458
+"c:\Users\HP\Desktop\Smash apartments\server\package.json", "JSON", 0, 0, 0, 0, 31, 0, 0, 0, 0, 1, 32
+"c:\Users\HP\Desktop\Smash apartments\server\routes\authRoutes.js", "JavaScript", 0, 0, 203, 0, 0, 0, 0, 0, 0, 3, 206
+"Total", "-", 22562, 2896, 6564, 92, 10141, 40, 5, 4, 701, 2348, 45353

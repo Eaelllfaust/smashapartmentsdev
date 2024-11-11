@@ -85,7 +85,7 @@ export default function CurrentBookings() {
     }
   };
   const viewReceipt = (receipt) => {
-    window.open(`http://localhost:8000/${receipt.media_location}`, "_blank");
+    window.open(`https://smashapartments.com/uploads/${receipt.media_name}`, "_blank");
   };
   const { user, loading } = useContext(UserContext);
   const navigate = useNavigate();
@@ -207,7 +207,7 @@ export default function CurrentBookings() {
                               >
                                 <div className="receipt-preview">
                                   <img
-                                    src={`http://localhost:8000/${receipt.media_location}`}
+                                    src={`https://smashapartments.com/uploads/${receipt.media_name}`}
                                     alt="Receipt preview"
                                   />
                                 </div>
@@ -309,7 +309,7 @@ export default function CurrentBookings() {
                         <img
                           src={
                             booking.media.length > 0
-                              ? `http://localhost:8000/uploads/${booking.media[0].media_name}`
+                              ? `https://smashapartments.com/uploads/${booking.media[0].media_name}`
                               : "/assets/properties (1).png"
                           }
                           alt=""

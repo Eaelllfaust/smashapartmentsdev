@@ -141,7 +141,7 @@ export default function AirportPickups() {
   };
 
   const viewReceipt = (receipt) => {
-    window.open(`http://localhost:8000/${receipt.media_location}`, "_blank");
+    window.open(`https://smashapartments.com/uploads/${receipt.media_name}`, "_blank");
   };
 
   return (
@@ -235,7 +235,7 @@ export default function AirportPickups() {
                               >
                                 <div className="receipt-preview">
                                   <img
-                                    src={`http://localhost:8000/${receipt.media_location}`}
+                                    src={`https://smashapartments.com/uploads/${receipt.media_name}`}
                                     alt="Receipt preview"
                                   />
                                 </div>
@@ -284,9 +284,9 @@ export default function AirportPickups() {
                       </div>
                     </div>
                     <div className="info_second">
-                      <div>
-                        <img src="/assets/bg (4).png" alt="" />
-                      </div>
+                    <div>
+                    <img src={booking.media.length > 0 ? `https://smashapartments.com/uploads/${booking.media[0].media_name}` : '/assets/properties (1).png'} alt="" />
+                  </div>
                     </div>
                   </div>
                   <br />

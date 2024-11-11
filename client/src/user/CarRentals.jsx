@@ -134,7 +134,7 @@ export default function CarRentals() {
   };
 
   const viewReceipt = (receipt) => {
-    window.open(`http://localhost:8000/${receipt.media_location}`, '_blank');
+    window.open(`https://smashapartments.com/uploads/${receipt.media_name}`, '_blank');
   };
 
   return (
@@ -238,7 +238,7 @@ export default function CarRentals() {
                           >
                             <div className="receipt-preview">
                               <img 
-                                src={`http://localhost:8000/${receipt.media_location}`} 
+                                src={`https://smashapartments.com/uploads/${receipt.media_name}`} 
                                 alt="Receipt preview"
                               />
                             </div>
@@ -253,7 +253,7 @@ export default function CarRentals() {
                 </div>
                 <div className="info_second">
                   <div>
-                    <img src={rental.media.length > 0 ? `http://localhost:8000/uploads/${rental.media[0].media_name}` : '/assets/properties (1).png'} alt="" />
+                    <img src={rental.media.length > 0 ? `https://smashapartments.com/uploads/${rental.media[0].media_name}` : '/assets/properties (1).png'} alt="" />
                   </div>
                 </div>
               </div>

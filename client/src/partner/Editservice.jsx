@@ -219,7 +219,7 @@ export default function Editservice() {
                 {images.existing.map((image, index) => (
                   <div key={`existing-${index}`} className="image_container">
                     <img
-                      src={`http://localhost:8000/${image.url}`}
+                      src={`https://smashapartments.com/uploads/${image.name}`}
                       alt={`existing preview ${index}`}
                     />
                     <button
